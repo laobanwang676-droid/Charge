@@ -109,7 +109,7 @@
     }
 
     .chip strong {
-      color: #fff;
+      color: var(--text);
       font-weight: 600;
     }
 
@@ -194,7 +194,7 @@
     .field.full { grid-column: 1 / -1; }
 
     .field label {
-      color: #c8d4e7;
+      color: var(--muted);
       font-size: 13px;
     }
 
@@ -211,7 +211,7 @@
     }
 
     .field input::placeholder {
-      color: #6e7f97;
+      color: var(--muted);
     }
 
     .field input:focus {
@@ -269,13 +269,13 @@
     .notice.ok {
       border-color: rgba(34, 197, 94, 0.28);
       background: rgba(34, 197, 94, 0.08);
-      color: #b7ffd0;
+      color: var(--success);
     }
 
     .notice.err {
       border-color: rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.08);
-      color: #ffb7b7;
+      color: var(--danger);
     }
 
     .workbench {
@@ -304,7 +304,7 @@
 
     .tab.active {
       background: rgba(79, 140, 255, 0.18);
-      color: #fff;
+      color: var(--text);
       border-color: rgba(79, 140, 255, 0.28);
     }
 
@@ -432,6 +432,76 @@
 
     body.theme-dark .theme-toggle {
       background: rgba(15, 25, 41, 0.85);
+    }
+
+    body.theme-dark .chip {
+      background: rgba(15, 25, 41, 0.82);
+      color: var(--text);
+    }
+
+    body.theme-dark .chip strong {
+      color: var(--text);
+    }
+
+    body.theme-dark .verify-card,
+    body.theme-dark .tab-panel,
+    body.theme-dark .metric,
+    body.theme-dark .list-item {
+      background: rgba(15, 25, 41, 0.88);
+      color: var(--text);
+    }
+
+    body.theme-dark .field input {
+      background: rgba(7, 17, 31, 0.88);
+      border-color: rgba(148, 163, 184, 0.22);
+      color: var(--text);
+    }
+
+    body.theme-dark .field input::placeholder {
+      color: #7f90ad;
+    }
+
+    body.theme-dark .field label,
+    body.theme-dark .panel-title .sub,
+    body.theme-dark .helper,
+    body.theme-dark .metric .label,
+    body.theme-dark .list-item,
+    body.theme-dark .brand p {
+      color: var(--muted);
+    }
+
+    body.theme-dark .tabs {
+      background: rgba(15, 25, 41, 0.82);
+    }
+
+    body.theme-dark .tab {
+      color: var(--muted);
+    }
+
+    body.theme-dark .panel-head {
+      background: rgba(7, 17, 31, 0.42);
+    }
+
+    body.theme-dark .badge {
+      color: #bcd0ff;
+    }
+
+    body.theme-dark .notice {
+      background: rgba(7, 17, 31, 0.88);
+      color: var(--text);
+    }
+
+    body.theme-dark .notice.ok {
+      color: #8ff0b0;
+    }
+
+    body.theme-dark .notice.err {
+      color: #ff9d9d;
+    }
+
+    body.theme-dark code {
+      background: rgba(79, 140, 255, 0.14);
+      color: #bcd0ff;
     }
 
     body.theme-dark .toggle-switch {
