@@ -456,7 +456,7 @@
                   <button class="btn-success" id="charge-btn">开始充电</button>
                 </div>
                 <div class="notice" id="charge-status">验证成功后可在这里发起充电请求。</div>
-                <div class="helper">和原有机器人一致：站点状态正常、插座空闲、金额为 1-4 元时才会真正执行支付。</div>
+                <div class="helper">站点状态正常、插座空闲、金额为 1-4 元时才会继续下一步。</div>
               </section>
 
               <section class="tab-panel" id="tab-power">
@@ -476,7 +476,7 @@
                   <button class="btn-primary" id="power-btn">查询功率</button>
                 </div>
                 <div class="notice" id="power-status">验证成功后可查询指定插座当前功率。</div>
-                <div class="helper">查询逻辑与 <code>chongdian.py</code> 保持一致，会先查进行中订单，再请求功率接口。</div>
+                <div class="helper">先查看当前状态，再显示功率结果。</div>
               </section>
 
               <section class="tab-panel" id="tab-order">
@@ -496,7 +496,7 @@
                   <button class="btn-primary" id="order-btn">查询订单</button>
                 </div>
                 <div class="notice" id="order-status">验证成功后可查询指定插座最近订单。</div>
-                <div class="helper">查询逻辑与 <code>chongdian.py</code> 保持一致，会返回当前充电中或最近已完成订单的详情。</div>
+                <div class="helper">会显示当前充电中或最近完成的订单信息。</div>
               </section>
             </div>
           </div>
@@ -567,6 +567,8 @@
     const metricVerify = document.getElementById('metric-verify');
 
     let sessionToken = '';
+    let verifyCooldownUntil = 0;
+    let verifyInFlight = false;
     let chargeCooldownUntil = 0;
     let chargeInFlight = false;
 
@@ -597,6 +599,43 @@
 
     function formatSeconds(seconds) {
       return Math.max(0, Math.ceil(seconds));
+    }
+
+    function beginVerifyCooldown(seconds = 5) {
+      verifyCooldownUntil = Date.now() + seconds * 1000;
+      setButtonLocked(verifyBtn, true);
+
+      const tick = () => {
+        const remaining = Math.ceil((verifyCooldownUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+          verifyCooldownUntil = 0;
+          if (!verifyInFlight) {
+            setButtonLocked(verifyBtn, false);
+            verifyBtn.textContent = '验证手机号';
+          }
+          return;
+        }
+        verifyBtn.textContent = `请等待 ${remaining}s`;
+        window.setTimeout(tick, 250);
+      };
+
+      tick();
+    }
+
+    function updateVerifyButtonState() {
+      if (verifyInFlight) {
+        setButtonLocked(verifyBtn, true);
+        verifyBtn.textContent = '提交中...';
+        return;
+      }
+      if (verifyCooldownUntil && Date.now() < verifyCooldownUntil) {
+        setButtonLocked(verifyBtn, true);
+        const remaining = Math.ceil((verifyCooldownUntil - Date.now()) / 1000);
+        verifyBtn.textContent = `请等待 ${remaining}s`;
+        return;
+      }
+      setButtonLocked(verifyBtn, false);
+      verifyBtn.textContent = '验证手机号';
     }
 
     function beginChargeCooldown(seconds = 5) {
@@ -730,6 +769,8 @@
 
     function resetAll() {
       sessionToken = '';
+      verifyCooldownUntil = 0;
+      verifyInFlight = false;
       document.getElementById('phone').value = '';
       Object.values(fieldGroups).forEach((group) => {
         group.input.value = '';
@@ -743,6 +784,7 @@
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
       setStatus(powerStatus, '验证成功后可查询当前功率。');
       setStatus(orderStatus, '验证成功后可查询最近订单。');
+      updateVerifyButtonState();
       switchTab('charge');
     }
 
@@ -762,8 +804,21 @@
         return;
       }
 
+      if (verifyInFlight) {
+        setStatus(verifyStatus, '手机号正在验证中，请不要重复点击。', 'err');
+        return;
+      }
+      if (verifyCooldownUntil && Date.now() < verifyCooldownUntil) {
+        const remaining = formatSeconds((verifyCooldownUntil - Date.now()) / 1000);
+        setStatus(verifyStatus, `操作太快，请 ${remaining} 秒后再试。`, 'err');
+        updateVerifyButtonState();
+        return;
+      }
+
       const phone = fieldGroups.phone.input.value.trim();
       setStatus(verifyStatus, '正在验证手机号...');
+      verifyInFlight = true;
+      updateVerifyButtonState();
       try {
         const result = await api('/api/verify', { phone });
         if (!result.token) {
@@ -771,13 +826,24 @@
         }
         setVerifiedUI(result.phone || phone, result.token);
         setStatus(verifyStatus, `${result.message}\n手机号：${result.phone}`, 'ok');
+        beginVerifyCooldown(5);
       } catch (error) {
+        if (error.message.includes('操作太快') || error.message.includes('请求过于频繁')) {
+          const match = error.message.match(/(\d+)\s*秒/);
+          if (match) {
+            verifyCooldownUntil = Date.now() + Number(match[1]) * 1000;
+            updateVerifyButtonState();
+          }
+        }
         sessionToken = '';
         verifyBadge.textContent = '待验证';
         sessionState.textContent = '未验证';
         metricVerify.textContent = '未验证';
         closeWorkbench();
         setStatus(verifyStatus, error.message, 'err');
+      } finally {
+        verifyInFlight = false;
+        updateVerifyButtonState();
       }
     }
 
@@ -911,6 +977,7 @@
     });
 
     window.setInterval(updateChargeButtonState, 250);
+    window.setInterval(updateVerifyButtonState, 250);
 
     resetAll();
   </script>
