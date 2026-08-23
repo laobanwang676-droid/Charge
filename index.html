@@ -391,12 +391,10 @@
     <header class="topbar">
       <div class="brand">
         <h1>充电控制台</h1>
-        <p>手机号验证通过后，开放充电、功率查询、订单查询三个动作。所有请求都由本地 Python 后端执行。</p>
+        <p>手机号验证通过后，可继续进行充电、功率查询和订单查询。</p>
       </div>
       <div class="status-strip">
         <div class="chip"><strong id="session-state">未验证</strong></div>
-        <div class="chip">接口源 <strong id="api-source">cpolar</strong></div>
-        <div class="chip">后端 <strong>ChargeDemo</strong></div>
       </div>
     </header>
 
@@ -406,7 +404,7 @@
           <div class="panel-title">
             <div>
               <h2>身份验证与操作台</h2>
-              <div class="sub">先完成手机号校验，再进行充电或查询。站点号、插座号、金额都必须是纯数字。</div>
+              <div class="sub">先完成手机号校验，再进行充电或查询。站点号、插座号、金额都需要是纯数字。</div>
             </div>
             <span class="badge" id="verify-badge">待验证</span>
           </div>
@@ -509,8 +507,8 @@
         <section class="sidebar-card">
           <div class="panel-title">
             <div>
-              <h2>运行状态</h2>
-              <div class="sub">当前页面和后端的会话状态。</div>
+              <h2>状态</h2>
+              <div class="sub">当前页面的验证状态。</div>
             </div>
           </div>
           <div class="metric-grid">
@@ -519,16 +517,16 @@
               <span class="value" id="metric-verify">未验证</span>
             </div>
             <div class="metric">
-              <span class="label">开放动作</span>
+              <span class="label">可用功能</span>
               <span class="value">3 项</span>
             </div>
             <div class="metric">
-              <span class="label">接口模式</span>
-              <span class="value">Token</span>
+              <span class="label">服务状态</span>
+              <span class="value">正常</span>
             </div>
             <div class="metric">
-              <span class="label">后端端口</span>
-              <span class="value">8080</span>
+              <span class="label">响应方式</span>
+              <span class="value">即时</span>
             </div>
           </div>
         </section>
@@ -537,14 +535,14 @@
           <div class="panel-title">
             <div>
               <h2>输入规则</h2>
-              <div class="sub">前端会做即时校验，后端会再做一次校验。</div>
+              <div class="sub">请按页面要求输入数字信息。</div>
             </div>
           </div>
           <div class="list">
             <div class="list-item">手机号必须是 11 位纯数字。</div>
             <div class="list-item">站点号、插座号必须是纯数字，不允许空格、中文或小数。</div>
             <div class="list-item">金额仅允许 1 到 4 的整数。</div>
-            <div class="list-item">验证成功后，才会显示功率查询和订单查询入口。</div>
+            <div class="list-item">验证成功后，才会显示更多功能。</div>
           </div>
         </section>
       </aside>
@@ -743,8 +741,8 @@
       closeWorkbench();
       setStatus(verifyStatus, '等待验证。');
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
-      setStatus(powerStatus, '验证成功后可查询指定插座当前功率。');
-      setStatus(orderStatus, '验证成功后可查询指定插座最近订单。');
+      setStatus(powerStatus, '验证成功后可查询当前功率。');
+      setStatus(orderStatus, '验证成功后可查询最近订单。');
       switchTab('charge');
     }
 
