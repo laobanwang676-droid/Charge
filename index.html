@@ -3,243 +3,552 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>充电验证页</title>
+  <title>充电控制台</title>
   <style>
     :root {
-      --bg: #f3f5f7;
-      --panel: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --line: #dbe3ea;
-      --accent: #2563eb;
-      --accent-2: #0f9d58;
-      --danger: #dc2626;
-      --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      --bg: #07111f;
+      --bg-2: #0d1728;
+      --panel: rgba(11, 20, 35, 0.88);
+      --panel-2: rgba(15, 25, 41, 0.92);
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #e8eef8;
+      --muted: #91a4bf;
+      --accent: #4f8cff;
+      --accent-strong: #2f6bff;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
     }
+
     * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
     body {
       margin: 0;
-      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
-      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 35%, #eef2f6 100%);
       color: var(--text);
-      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(79, 140, 255, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 26%),
+        linear-gradient(180deg, #07111f 0%, #091525 45%, #0b1320 100%);
     }
-    .wrap {
-      width: min(1040px, calc(100% - 32px));
+
+    .shell {
+      width: min(1240px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 32px 0 48px;
+      padding: 24px 0 40px;
     }
-    .hero {
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(15, 25, 41, 0.96), rgba(9, 17, 28, 0.92));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .chip strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+      gap: 18px;
+      margin-top: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(15, 25, 41, 0.92), rgba(8, 15, 26, 0.95));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .panel-title h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .panel-title .sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(79, 140, 255, 0.14);
+      color: #9cc0ff;
+      border: 1px solid rgba(79, 140, 255, 0.24);
+      font-size: 12px;
+    }
+
+    .panel-body {
+      padding: 18px 20px 20px;
+    }
+
+    .verify-card {
       display: grid;
       gap: 14px;
       margin-bottom: 18px;
-    }
-    .hero h1 {
-      margin: 0;
-      font-size: 28px;
-      letter-spacing: 0;
-    }
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 18px;
-      align-items: start;
-    }
-    .card {
-      background: var(--panel);
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.02));
       border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      padding: 20px;
     }
-    .card h2 {
-      margin: 0 0 14px;
-      font-size: 18px;
-    }
-    .hint {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 14px;
-      line-height: 1.7;
-    }
-    .steps {
-      display: grid;
-      gap: 12px;
-    }
-    .step {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
-      background: #fbfdff;
-    }
-    .step strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-    .step .meta {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-    }
+
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
     }
-    .field { display: grid; gap: 8px; }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
     .field label {
+      color: #c8d4e7;
       font-size: 13px;
-      color: var(--muted);
     }
+
     .field input {
       width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 12px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 14px;
+      background: rgba(4, 10, 20, 0.72);
+      color: var(--text);
+      padding: 13px 14px;
       font-size: 15px;
       outline: none;
-      background: #fff;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
     }
+
+    .field input::placeholder {
+      color: #6e7f97;
+    }
+
     .field input:focus {
-      border-color: #93c5fd;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      border-color: rgba(79, 140, 255, 0.6);
+      box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.15);
     }
+
+    .field input.invalid {
+      border-color: rgba(239, 68, 68, 0.75);
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+    }
+
+    .field-error {
+      min-height: 18px;
+      font-size: 12px;
+      color: #ff9b9b;
+    }
+
     .actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      margin-top: 14px;
+      align-items: center;
     }
+
     button {
       border: 0;
-      border-radius: 10px;
-      padding: 11px 16px;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #fff;
       font-size: 14px;
       cursor: pointer;
-      color: white;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
     }
-    .primary { background: var(--accent); }
-    .success { background: var(--accent-2); }
-    .ghost {
-      background: #64748b;
-    }
-    .status {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #f8fafc;
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-primary { background: linear-gradient(180deg, var(--accent), var(--accent-strong)); box-shadow: 0 16px 30px rgba(47, 107, 255, 0.25); }
+    .btn-secondary { background: rgba(148, 163, 184, 0.22); border: 1px solid rgba(148, 163, 184, 0.18); }
+    .btn-success { background: linear-gradient(180deg, #28c76f, #16a34a); box-shadow: 0 16px 30px rgba(34, 197, 94, 0.18); }
+    .btn-ghost { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(148, 163, 184, 0.18); color: #d8e4f8; }
+
+    .notice {
+      min-height: 56px;
+      padding: 13px 14px;
+      border-radius: 14px;
       border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--text);
-      line-height: 1.7;
-      min-height: 52px;
       white-space: pre-wrap;
+      line-height: 1.7;
     }
-    .status.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
-    .status.err { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
-    .hidden { display: none !important; }
-    .panel-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+
+    .notice.ok {
+      border-color: rgba(34, 197, 94, 0.28);
+      background: rgba(34, 197, 94, 0.08);
+      color: #b7ffd0;
     }
-    .badge {
+
+    .notice.err {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.08);
+      color: #ffb7b7;
+    }
+
+    .workbench {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .tabs {
       display: inline-flex;
-      align-items: center;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      background: #e0f2fe;
-      color: #075985;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      flex-wrap: wrap;
     }
-    @media (max-width: 880px) {
-      .grid { grid-template-columns: 1fr; }
+
+    .tab {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: transparent;
+      color: #c8d4e7;
+      border: 1px solid transparent;
+    }
+
+    .tab.active {
+      background: rgba(79, 140, 255, 0.18);
+      color: #fff;
+      border-color: rgba(79, 140, 255, 0.28);
+    }
+
+    .tab-panels {
+      display: grid;
+      gap: 14px;
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-panel.active { display: block; }
+
+    .helper {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 16px;
+    }
+
+    .sidebar-card {
+      padding: 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15, 25, 41, 0.9), rgba(9, 17, 28, 0.95));
+      box-shadow: var(--shadow);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .metric .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .metric .value {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .list-item {
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      color: #dbe6f7;
+      line-height: 1.65;
+      font-size: 13px;
+    }
+
+    .hidden { display: none !important; }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
+      .status-strip { justify-content: flex-start; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="hero">
-      <h1>充电验证与下单</h1>
-      <p>先输入手机号做后端校验，验证通过后才会显示充电表单。真正的防线在 Python 后端，不在页面本身。</p>
-    </div>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>充电控制台</h1>
+        <p>手机号验证通过后，开放充电、功率查询、订单查询三个动作。所有请求都由本地 Python 后端执行。</p>
+      </div>
+      <div class="status-strip">
+        <div class="chip"><strong id="session-state">未验证</strong></div>
+        <div class="chip">接口源 <strong id="api-source">cpolar</strong></div>
+        <div class="chip">后端 <strong>ChargeDemo</strong></div>
+      </div>
+    </header>
 
-    <div class="grid">
-      <section class="card">
-        <div class="panel-title">
-          <h2>步骤 1：手机号验证</h2>
-          <span class="badge" id="verify-badge">未验证</span>
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <div>
+              <h2>身份验证与操作台</h2>
+              <div class="sub">先完成手机号校验，再进行充电或查询。站点号、插座号、金额都必须是纯数字。</div>
+            </div>
+            <span class="badge" id="verify-badge">待验证</span>
+          </div>
         </div>
-        <div class="hint">这里的验证是先发到本地电脑上的 Python 程序，由后端判断手机号是否在白名单中。只有后端返回成功，页面才会进入下一步。</div>
 
-        <div class="steps">
-          <div class="step">
-            <strong>输入手机号</strong>
+        <div class="panel-body">
+          <div class="verify-card">
             <div class="form-grid">
-              <div class="field" style="grid-column: 1 / -1;">
+              <div class="field full">
                 <label for="phone">手机号</label>
-                <input id="phone" maxlength="11" inputmode="numeric" placeholder="请输入 11 位手机号" />
+                <input id="phone" maxlength="11" inputmode="numeric" placeholder="请输入 11 位手机号" autocomplete="off" />
+                <div class="field-error" id="phone-error"></div>
               </div>
             </div>
             <div class="actions">
-              <button class="primary" id="verify-btn">验证手机号</button>
-              <button class="ghost" id="reset-btn" type="button">重置</button>
+              <button class="btn-primary" id="verify-btn">验证手机号</button>
+              <button class="btn-secondary" id="reset-btn" type="button">重置</button>
             </div>
-            <div class="status" id="verify-status">等待验证。</div>
+            <div class="notice" id="verify-status">等待验证。</div>
           </div>
 
-          <div class="step hidden" id="charge-step">
-            <strong>步骤 2：选择充电信息</strong>
-            <div class="form-grid">
-              <div class="field">
-                <label for="station">站点号</label>
-                <input id="station" placeholder="例如 25" />
-              </div>
-              <div class="field">
-                <label for="sid">插座号</label>
-                <input id="sid" placeholder="例如 4" />
-              </div>
-              <div class="field" style="grid-column: 1 / -1;">
-                <label for="amount">金额（元）</label>
-                <input id="amount" placeholder="1 - 4 之间的数字" />
-              </div>
+          <div class="workbench hidden" id="workbench">
+            <div class="tabs" role="tablist" aria-label="充电操作切换">
+              <button class="tab active" data-tab="charge">充电</button>
+              <button class="tab" data-tab="power">功率查询</button>
+              <button class="tab" data-tab="order">订单查询</button>
             </div>
-            <div class="actions">
-              <button class="success" id="charge-btn">开始充电</button>
+
+            <div class="tab-panels">
+              <section class="tab-panel active" id="tab-charge">
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="charge-station">站点号</label>
+                    <input id="charge-station" inputmode="numeric" placeholder="例如 1" autocomplete="off" />
+                    <div class="field-error" id="charge-station-error"></div>
+                  </div>
+                  <div class="field">
+                    <label for="charge-sid">插座号</label>
+                    <input id="charge-sid" inputmode="numeric" placeholder="例如 1" autocomplete="off" />
+                    <div class="field-error" id="charge-sid-error"></div>
+                  </div>
+                  <div class="field full">
+                    <label for="charge-amount">金额（元）</label>
+                    <input id="charge-amount" inputmode="numeric" placeholder="1 - 4 之间的数字" autocomplete="off" />
+                    <div class="field-error" id="charge-amount-error"></div>
+                  </div>
+                </div>
+                <div class="actions" style="margin-top: 14px;">
+                  <button class="btn-success" id="charge-btn">开始充电</button>
+                </div>
+                <div class="notice" id="charge-status">验证成功后可在这里发起充电请求。</div>
+                <div class="helper">和原有机器人一致：站点状态正常、插座空闲、金额为 1-4 元时才会真正执行支付。</div>
+              </section>
+
+              <section class="tab-panel" id="tab-power">
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="power-station">站点号</label>
+                    <input id="power-station" inputmode="numeric" placeholder="例如 1" autocomplete="off" />
+                    <div class="field-error" id="power-station-error"></div>
+                  </div>
+                  <div class="field">
+                    <label for="power-sid">插座号</label>
+                    <input id="power-sid" inputmode="numeric" placeholder="例如 1" autocomplete="off" />
+                    <div class="field-error" id="power-sid-error"></div>
+                  </div>
+                </div>
+                <div class="actions" style="margin-top: 14px;">
+                  <button class="btn-primary" id="power-btn">查询功率</button>
+                </div>
+                <div class="notice" id="power-status">验证成功后可查询指定插座当前功率。</div>
+                <div class="helper">查询逻辑与 <code>chongdian.py</code> 保持一致，会先查进行中订单，再请求功率接口。</div>
+              </section>
+
+              <section class="tab-panel" id="tab-order">
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="order-station">站点号</label>
+                    <input id="order-station" inputmode="numeric" placeholder="例如 1" autocomplete="off" />
+                    <div class="field-error" id="order-station-error"></div>
+                  </div>
+                  <div class="field">
+                    <label for="order-sid">插座号</label>
+                    <input id="order-sid" inputmode="numeric" placeholder="例如 1" autocomplete="off" />
+                    <div class="field-error" id="order-sid-error"></div>
+                  </div>
+                </div>
+                <div class="actions" style="margin-top: 14px;">
+                  <button class="btn-primary" id="order-btn">查询订单</button>
+                </div>
+                <div class="notice" id="order-status">验证成功后可查询指定插座最近订单。</div>
+                <div class="helper">查询逻辑与 <code>chongdian.py</code> 保持一致，会返回当前充电中或最近已完成订单的详情。</div>
+              </section>
             </div>
-            <div class="status" id="charge-status">验证成功后在这里提交充电请求。</div>
           </div>
         </div>
       </section>
 
-      <aside class="card">
-        <div class="panel-title">
-          <h2>说明</h2>
-        </div>
-        <div class="steps">
-          <div class="step">
-            <strong>为什么不能直接跳过验证</strong>
-            <div class="meta">页面只是前端展示。真正决定能不能充电的是后端接口，它会检查服务器会话里是否已经完成手机号验证。没有验证令牌，直接调用充电接口也会被拒绝。</div>
+      <aside class="sidebar">
+        <section class="sidebar-card">
+          <div class="panel-title">
+            <div>
+              <h2>运行状态</h2>
+              <div class="sub">当前页面和后端的会话状态。</div>
+            </div>
           </div>
-          <div class="step">
-            <strong>你现在会得到什么</strong>
-            <div class="meta">一个独立的 Python 网页后端 + 一个单页 HTML 界面。适合先在本机跑通，再决定是否挂到 cpolar 或 GitHub Pages。</div>
+          <div class="metric-grid">
+            <div class="metric">
+              <span class="label">验证状态</span>
+              <span class="value" id="metric-verify">未验证</span>
+            </div>
+            <div class="metric">
+              <span class="label">开放动作</span>
+              <span class="value">3 项</span>
+            </div>
+            <div class="metric">
+              <span class="label">接口模式</span>
+              <span class="value">Token</span>
+            </div>
+            <div class="metric">
+              <span class="label">后端端口</span>
+              <span class="value">8080</span>
+            </div>
           </div>
-          <div class="step">
-            <strong>运行地址</strong>
-            <div class="meta">默认是 <code>http://127.0.0.1:8080</code>。后面如果你要暴露公网，就把这个本地端口交给 cpolar 去转发。</div>
+        </section>
+
+        <section class="sidebar-card">
+          <div class="panel-title">
+            <div>
+              <h2>输入规则</h2>
+              <div class="sub">前端会做即时校验，后端会再做一次校验。</div>
+            </div>
           </div>
-        </div>
+          <div class="list">
+            <div class="list-item">手机号必须是 11 位纯数字。</div>
+            <div class="list-item">站点号、插座号必须是纯数字，不允许空格、中文或小数。</div>
+            <div class="list-item">金额仅允许 1 到 4 的整数。</div>
+            <div class="list-item">验证成功后，才会显示功率查询和订单查询入口。</div>
+          </div>
+        </section>
       </aside>
-    </div>
+    </main>
   </div>
 
   <script>
@@ -248,92 +557,364 @@
     const verifyBtn = document.getElementById('verify-btn');
     const resetBtn = document.getElementById('reset-btn');
     const chargeBtn = document.getElementById('charge-btn');
+    const powerBtn = document.getElementById('power-btn');
+    const orderBtn = document.getElementById('order-btn');
+    const workbench = document.getElementById('workbench');
     const verifyStatus = document.getElementById('verify-status');
     const chargeStatus = document.getElementById('charge-status');
-    const chargeStep = document.getElementById('charge-step');
+    const powerStatus = document.getElementById('power-status');
+    const orderStatus = document.getElementById('order-status');
     const verifyBadge = document.getElementById('verify-badge');
-    let sessionToken = '';
+    const sessionState = document.getElementById('session-state');
+    const metricVerify = document.getElementById('metric-verify');
 
-    function setStatus(node, text, kind) {
-      node.className = 'status' + (kind ? ' ' + kind : '');
+    let sessionToken = '';
+    let chargeCooldownUntil = 0;
+    let chargeInFlight = false;
+
+    const fieldGroups = {
+      phone: { input: document.getElementById('phone'), error: document.getElementById('phone-error') },
+      chargeStation: { input: document.getElementById('charge-station'), error: document.getElementById('charge-station-error') },
+      chargeSid: { input: document.getElementById('charge-sid'), error: document.getElementById('charge-sid-error') },
+      chargeAmount: { input: document.getElementById('charge-amount'), error: document.getElementById('charge-amount-error') },
+      powerStation: { input: document.getElementById('power-station'), error: document.getElementById('power-station-error') },
+      powerSid: { input: document.getElementById('power-sid'), error: document.getElementById('power-sid-error') },
+      orderStation: { input: document.getElementById('order-station'), error: document.getElementById('order-station-error') },
+      orderSid: { input: document.getElementById('order-sid'), error: document.getElementById('order-sid-error') },
+    };
+
+    function setStatus(node, text, kind = '') {
+      node.className = 'notice' + (kind ? ' ' + kind : '');
       node.textContent = text;
     }
 
-    async function api(path, data, token = '') {
+    function setFieldError(group, message) {
+      group.input.classList.toggle('invalid', Boolean(message));
+      group.error.textContent = message || '';
+    }
+
+    function setButtonLocked(button, locked) {
+      button.disabled = locked;
+    }
+
+    function formatSeconds(seconds) {
+      return Math.max(0, Math.ceil(seconds));
+    }
+
+    function beginChargeCooldown(seconds = 5) {
+      chargeCooldownUntil = Date.now() + seconds * 1000;
+      setButtonLocked(chargeBtn, true);
+
+      const tick = () => {
+        const remaining = Math.ceil((chargeCooldownUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+          chargeCooldownUntil = 0;
+          if (!chargeInFlight) {
+            setButtonLocked(chargeBtn, false);
+            chargeBtn.textContent = '开始充电';
+          }
+          return;
+        }
+        chargeBtn.textContent = `请等待 ${remaining}s`;
+        window.setTimeout(tick, 250);
+      };
+
+      tick();
+    }
+
+    function updateChargeButtonState() {
+      if (chargeInFlight) {
+        setButtonLocked(chargeBtn, true);
+        chargeBtn.textContent = '提交中...';
+        return;
+      }
+      if (chargeCooldownUntil && Date.now() < chargeCooldownUntil) {
+        setButtonLocked(chargeBtn, true);
+        const remaining = Math.ceil((chargeCooldownUntil - Date.now()) / 1000);
+        chargeBtn.textContent = `请等待 ${remaining}s`;
+        return;
+      }
+      setButtonLocked(chargeBtn, false);
+      chargeBtn.textContent = '开始充电';
+    }
+
+    function clearFieldErrors() {
+      Object.values(fieldGroups).forEach((group) => setFieldError(group, ''));
+    }
+
+    function isDigits(value) {
+      return /^\d+$/.test(String(value).trim());
+    }
+
+    function validateDigitsField(group, label, { minLength = 1, maxLength = Infinity, exactLength = null } = {}) {
+      const value = group.input.value.trim();
+      if (!value) {
+        setFieldError(group, `${label}不能为空`);
+        return false;
+      }
+      if (!isDigits(value)) {
+        setFieldError(group, `${label}必须是纯数字`);
+        return false;
+      }
+      if (exactLength !== null && value.length !== exactLength) {
+        setFieldError(group, `${label}必须是 ${exactLength} 位数字`);
+        return false;
+      }
+      if (value.length < minLength || value.length > maxLength) {
+        setFieldError(group, `${label}长度不正确`);
+        return false;
+      }
+      setFieldError(group, '');
+      return true;
+    }
+
+    function validatePhone() {
+      return validateDigitsField(fieldGroups.phone, '手机号', { exactLength: 11 });
+    }
+
+    function validateChargeForm() {
+      const okStation = validateDigitsField(fieldGroups.chargeStation, '站点号');
+      const okSid = validateDigitsField(fieldGroups.chargeSid, '插座号');
+      const okAmount = validateDigitsField(fieldGroups.chargeAmount, '金额');
+      if (okAmount) {
+        const amount = Number(fieldGroups.chargeAmount.input.value.trim());
+        if (!Number.isInteger(amount) || amount < 1 || amount > 4) {
+          setFieldError(fieldGroups.chargeAmount, '金额只能是 1 到 4 的整数');
+          return false;
+        }
+      }
+      return okStation && okSid && okAmount;
+    }
+
+    function validateQueryForm(kind) {
+      const stationGroup = kind === 'power' ? fieldGroups.powerStation : fieldGroups.orderStation;
+      const sidGroup = kind === 'power' ? fieldGroups.powerSid : fieldGroups.orderSid;
+      return validateDigitsField(stationGroup, '站点号') && validateDigitsField(sidGroup, '插座号');
+    }
+
+    async function api(path, data) {
       const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+      if (sessionToken) {
+        headers.Authorization = `Bearer ${sessionToken}`;
       }
       const response = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
       });
-      const payload = await response.json();
+      let payload = {};
+      try {
+        payload = await response.json();
+      } catch (_) {
+        payload = {};
+      }
       if (!response.ok) {
         throw new Error(payload.message || '请求失败');
       }
       return payload;
     }
 
+    function openWorkbench() {
+      workbench.classList.remove('hidden');
+    }
+
+    function closeWorkbench() {
+      workbench.classList.add('hidden');
+    }
+
+    function setVerifiedUI(phone, token) {
+      sessionToken = token || '';
+      verifyBadge.textContent = '已验证';
+      sessionState.textContent = `已验证：${phone}`;
+      metricVerify.textContent = '已验证';
+      openWorkbench();
+    }
+
+    function resetAll() {
+      sessionToken = '';
+      document.getElementById('phone').value = '';
+      Object.values(fieldGroups).forEach((group) => {
+        group.input.value = '';
+        setFieldError(group, '');
+      });
+      verifyBadge.textContent = '待验证';
+      sessionState.textContent = '未验证';
+      metricVerify.textContent = '未验证';
+      closeWorkbench();
+      setStatus(verifyStatus, '等待验证。');
+      setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
+      setStatus(powerStatus, '验证成功后可查询指定插座当前功率。');
+      setStatus(orderStatus, '验证成功后可查询指定插座最近订单。');
+      switchTab('charge');
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.tab === name);
+      });
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        panel.classList.toggle('active', panel.id === `tab-${name}`);
+      });
+    }
+
     async function verifyPhone() {
-      const phone = document.getElementById('phone').value.trim();
-      setStatus(verifyStatus, '正在验证手机号...', '');
+      clearFieldErrors();
+      if (!validatePhone()) {
+        setStatus(verifyStatus, '手机号输入有误，请检查后再提交。', 'err');
+        return;
+      }
+
+      const phone = fieldGroups.phone.input.value.trim();
+      setStatus(verifyStatus, '正在验证手机号...');
       try {
         const result = await api('/api/verify', { phone });
-        sessionToken = result.token || '';
-        if (!sessionToken) {
-          verifyBadge.textContent = '未验证';
-          chargeStep.classList.add('hidden');
-          setStatus(verifyStatus, '验证成功但未返回令牌，请重试。', 'err');
-          return;
+        if (!result.token) {
+          throw new Error('验证成功但未返回令牌，请重试');
         }
-        verifyBadge.textContent = '已验证';
+        setVerifiedUI(result.phone || phone, result.token);
         setStatus(verifyStatus, `${result.message}\n手机号：${result.phone}`, 'ok');
-        chargeStep.classList.remove('hidden');
       } catch (error) {
         sessionToken = '';
-        verifyBadge.textContent = '未验证';
-        chargeStep.classList.add('hidden');
+        verifyBadge.textContent = '待验证';
+        sessionState.textContent = '未验证';
+        metricVerify.textContent = '未验证';
+        closeWorkbench();
         setStatus(verifyStatus, error.message, 'err');
       }
     }
 
     async function startCharge() {
-      const station_num = document.getElementById('station').value.trim();
-      const sid = document.getElementById('sid').value.trim();
-      const amount = document.getElementById('amount').value.trim();
+      clearFieldErrors();
       if (!sessionToken) {
         setStatus(chargeStatus, '请先完成手机号验证。', 'err');
         return;
       }
-      setStatus(chargeStatus, '正在提交充电请求...', '');
+      if (chargeInFlight) {
+        setStatus(chargeStatus, '充电请求正在处理中，请不要重复点击。', 'err');
+        return;
+      }
+      if (chargeCooldownUntil && Date.now() < chargeCooldownUntil) {
+        const remaining = formatSeconds((chargeCooldownUntil - Date.now()) / 1000);
+        setStatus(chargeStatus, `操作太快，请 ${remaining} 秒后再试。`, 'err');
+        updateChargeButtonState();
+        return;
+      }
+      if (!validateChargeForm()) {
+        setStatus(chargeStatus, '请先修正充电信息中的数字格式。', 'err');
+        return;
+      }
+
+      const station_num = fieldGroups.chargeStation.input.value.trim();
+      const sid = fieldGroups.chargeSid.input.value.trim();
+      const amount = fieldGroups.chargeAmount.input.value.trim();
+
+      setStatus(chargeStatus, '正在提交充电请求...');
+      chargeInFlight = true;
+      updateChargeButtonState();
       try {
-        const result = await api('/api/charge', { station_num, sid, amount }, sessionToken);
+        const result = await api('/api/charge', { station_num, sid, amount });
         setStatus(chargeStatus, result.message, 'ok');
+        beginChargeCooldown(5);
       } catch (error) {
+        if (error.message.includes('操作太快') || error.message.includes('请求过于频繁')) {
+          const match = error.message.match(/(\d+)\s*秒/);
+          if (match) {
+            chargeCooldownUntil = Date.now() + Number(match[1]) * 1000;
+            updateChargeButtonState();
+          }
+        }
         setStatus(chargeStatus, error.message, 'err');
+      }
+      finally {
+        chargeInFlight = false;
+        updateChargeButtonState();
       }
     }
 
-    function resetAll() {
-      document.getElementById('phone').value = '';
-      document.getElementById('station').value = '';
-      document.getElementById('sid').value = '';
-      document.getElementById('amount').value = '';
-      sessionToken = '';
-      verifyBadge.textContent = '未验证';
-      chargeStep.classList.add('hidden');
-      setStatus(verifyStatus, '等待验证。', '');
-      setStatus(chargeStatus, '验证成功后在这里提交充电请求。', '');
+    async function queryPowerAction() {
+      clearFieldErrors();
+      if (!sessionToken) {
+        setStatus(powerStatus, '请先完成手机号验证。', 'err');
+        return;
+      }
+      if (!validateQueryForm('power')) {
+        setStatus(powerStatus, '请先修正查询信息中的数字格式。', 'err');
+        return;
+      }
+
+      const station_num = fieldGroups.powerStation.input.value.trim();
+      const sid = fieldGroups.powerSid.input.value.trim();
+
+      setStatus(powerStatus, '正在查询功率...');
+      try {
+        const result = await api('/api/power', { station_num, sid });
+        setStatus(powerStatus, result.message, 'ok');
+      } catch (error) {
+        setStatus(powerStatus, error.message, 'err');
+      }
     }
 
+    async function queryOrderAction() {
+      clearFieldErrors();
+      if (!sessionToken) {
+        setStatus(orderStatus, '请先完成手机号验证。', 'err');
+        return;
+      }
+      if (!validateQueryForm('order')) {
+        setStatus(orderStatus, '请先修正查询信息中的数字格式。', 'err');
+        return;
+      }
+
+      const station_num = fieldGroups.orderStation.input.value.trim();
+      const sid = fieldGroups.orderSid.input.value.trim();
+
+      setStatus(orderStatus, '正在查询订单...');
+      try {
+        const result = await api('/api/order', { station_num, sid });
+        setStatus(orderStatus, result.message, 'ok');
+      } catch (error) {
+        setStatus(orderStatus, error.message, 'err');
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
     verifyBtn.addEventListener('click', verifyPhone);
-    chargeBtn.addEventListener('click', startCharge);
     resetBtn.addEventListener('click', resetAll);
+    chargeBtn.addEventListener('click', startCharge);
+    powerBtn.addEventListener('click', queryPowerAction);
+    orderBtn.addEventListener('click', queryOrderAction);
+
+    fieldGroups.phone.input.addEventListener('input', () => setFieldError(fieldGroups.phone, ''));
+    Object.values(fieldGroups).forEach((group) => {
+      group.input.addEventListener('blur', () => {
+        if (group === fieldGroups.phone) {
+          validatePhone();
+          return;
+        }
+        if (group === fieldGroups.chargeAmount) {
+          validateDigitsField(group, '金额');
+          const amount = Number(group.input.value.trim());
+          if (group.input.value.trim() && isDigits(group.input.value.trim()) && (!Number.isInteger(amount) || amount < 1 || amount > 4)) {
+            setFieldError(group, '金额只能是 1 到 4 的整数');
+          }
+          return;
+        }
+        if (group.input.value.trim()) {
+          validateDigitsField(group, group === fieldGroups.phone ? '手机号' : (group === fieldGroups.chargeAmount ? '金额' : '输入项'));
+        }
+      });
+    });
+
     document.getElementById('phone').addEventListener('keydown', (event) => {
       if (event.key === 'Enter') verifyPhone();
     });
+
+    window.setInterval(updateChargeButtonState, 250);
+
+    resetAll();
   </script>
 </body>
 </html>
