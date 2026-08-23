@@ -6,6 +6,23 @@
   <title>充电控制台</title>
   <style>
     :root {
+      --bg: #f5f7fb;
+      --bg-2: #eef3f9;
+      --panel: rgba(255, 255, 255, 0.94);
+      --panel-2: rgba(248, 250, 252, 0.98);
+      --line: rgba(148, 163, 184, 0.26);
+      --text: #162033;
+      --muted: #5b6b82;
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    body.theme-dark {
       --bg: #07111f;
       --bg-2: #0d1728;
       --panel: rgba(11, 20, 35, 0.88);
@@ -19,7 +36,6 @@
       --warning: #f59e0b;
       --danger: #ef4444;
       --shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
-      --radius: 18px;
     }
 
     * { box-sizing: border-box; }
@@ -29,9 +45,9 @@
       color: var(--text);
       font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(79, 140, 255, 0.18), transparent 30%),
-        radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 26%),
-        linear-gradient(180deg, #07111f 0%, #091525 45%, #0b1320 100%);
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 26%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
     }
 
     .shell {
@@ -48,7 +64,7 @@
       padding: 18px 20px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(15, 25, 41, 0.96), rgba(9, 17, 28, 0.92));
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
       box-shadow: var(--shadow);
       backdrop-filter: blur(14px);
     }
@@ -108,7 +124,7 @@
     .panel {
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(15, 25, 41, 0.92), rgba(8, 15, 26, 0.95));
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
       box-shadow: var(--shadow);
       overflow: hidden;
     }
@@ -116,7 +132,7 @@
     .panel-head {
       padding: 18px 20px 14px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(148, 163, 184, 0.05);
     }
 
     .panel-title {
@@ -160,7 +176,7 @@
       margin-bottom: 18px;
       padding: 16px;
       border-radius: 16px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.02));
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98));
       border: 1px solid var(--line);
     }
 
@@ -186,7 +202,7 @@
       width: 100%;
       border: 1px solid rgba(148, 163, 184, 0.18);
       border-radius: 14px;
-      background: rgba(4, 10, 20, 0.72);
+      background: rgba(255, 255, 255, 0.96);
       color: var(--text);
       padding: 13px 14px;
       font-size: 15px;
@@ -244,7 +260,7 @@
       padding: 13px 14px;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(248, 250, 252, 0.95);
       color: var(--text);
       white-space: pre-wrap;
       line-height: 1.7;
@@ -273,7 +289,7 @@
       gap: 8px;
       padding: 6px;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(248, 250, 252, 0.95);
       border: 1px solid var(--line);
       flex-wrap: wrap;
     }
@@ -282,7 +298,7 @@
       padding: 10px 14px;
       border-radius: 12px;
       background: transparent;
-      color: #c8d4e7;
+      color: var(--muted);
       border: 1px solid transparent;
     }
 
@@ -302,7 +318,7 @@
       padding: 16px;
       border-radius: 16px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.95);
     }
 
     .tab-panel.active { display: block; }
@@ -323,7 +339,7 @@
       padding: 18px;
       border-radius: var(--radius);
       border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(15, 25, 41, 0.9), rgba(9, 17, 28, 0.95));
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
       box-shadow: var(--shadow);
     }
 
@@ -338,7 +354,7 @@
       padding: 14px;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(248, 250, 252, 0.95);
     }
 
     .metric .label {
@@ -364,8 +380,8 @@
       padding: 13px 14px;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
-      color: #dbe6f7;
+      background: rgba(248, 250, 252, 0.95);
+      color: var(--text);
       line-height: 1.65;
       font-size: 13px;
     }
@@ -375,8 +391,55 @@
     code {
       padding: 2px 6px;
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--accent-strong);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 10px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--text);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.35);
+      flex: none;
+      transition: background .18s ease;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+      transition: transform .18s ease;
+    }
+
+    body.theme-dark .theme-toggle {
+      background: rgba(15, 25, 41, 0.85);
+    }
+
+    body.theme-dark .toggle-switch {
+      background: rgba(79, 140, 255, 0.55);
+    }
+
+    body.theme-dark .toggle-switch::after {
+      transform: translateX(18px);
     }
 
     @media (max-width: 980px) {
@@ -394,6 +457,10 @@
         <p>手机号验证通过后，可继续进行充电、功率查询和订单查询。</p>
       </div>
       <div class="status-strip">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+          <span class="toggle-switch" aria-hidden="true"></span>
+          <span id="theme-label">浅色</span>
+        </button>
         <div class="chip"><strong id="session-state">未验证</strong></div>
       </div>
     </header>
@@ -554,6 +621,8 @@
 
     const verifyBtn = document.getElementById('verify-btn');
     const resetBtn = document.getElementById('reset-btn');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeLabel = document.getElementById('theme-label');
     const chargeBtn = document.getElementById('charge-btn');
     const powerBtn = document.getElementById('power-btn');
     const orderBtn = document.getElementById('order-btn');
@@ -567,6 +636,7 @@
     const metricVerify = document.getElementById('metric-verify');
 
     let sessionToken = '';
+    let themeMode = 'light';
     let verifyCooldownUntil = 0;
     let verifyInFlight = false;
     let chargeCooldownUntil = 0;
@@ -595,6 +665,22 @@
 
     function setButtonLocked(button, locked) {
       button.disabled = locked;
+    }
+
+    function applyTheme(mode) {
+      themeMode = mode === 'dark' ? 'dark' : 'light';
+      document.body.classList.toggle('theme-dark', themeMode === 'dark');
+      themeToggle.setAttribute('aria-pressed', String(themeMode === 'dark'));
+      themeLabel.textContent = themeMode === 'dark' ? '深色' : '浅色';
+    }
+
+    function toggleTheme() {
+      applyTheme(themeMode === 'dark' ? 'light' : 'dark');
+      try {
+        window.localStorage.setItem('charge-theme', themeMode);
+      } catch (_) {
+        return;
+      }
     }
 
     function formatSeconds(seconds) {
@@ -947,6 +1033,7 @@
 
     verifyBtn.addEventListener('click', verifyPhone);
     resetBtn.addEventListener('click', resetAll);
+    themeToggle.addEventListener('click', toggleTheme);
     chargeBtn.addEventListener('click', startCharge);
     powerBtn.addEventListener('click', queryPowerAction);
     orderBtn.addEventListener('click', queryOrderAction);
@@ -978,6 +1065,13 @@
 
     window.setInterval(updateChargeButtonState, 250);
     window.setInterval(updateVerifyButtonState, 250);
+
+    try {
+      const savedTheme = window.localStorage.getItem('charge-theme');
+      applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
+    } catch (_) {
+      applyTheme('light');
+    }
 
     resetAll();
   </script>
