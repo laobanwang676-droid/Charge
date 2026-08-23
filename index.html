@@ -243,6 +243,8 @@
   </div>
 
   <script>
+    const API_BASE = 'https://4c78058c.r10.vip.cpolar.cn';
+
     const verifyBtn = document.getElementById('verify-btn');
     const resetBtn = document.getElementById('reset-btn');
     const chargeBtn = document.getElementById('charge-btn');
@@ -257,7 +259,7 @@
     }
 
     async function api(path, data) {
-      const response = await fetch(path, {
+      const response = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
