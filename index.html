@@ -1,1 +1,320 @@
-11111
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>充电验证页</title>
+  <style>
+    :root {
+      --bg: #f3f5f7;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ea;
+      --accent: #2563eb;
+      --accent-2: #0f9d58;
+      --danger: #dc2626;
+      --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 35%, #eef2f6 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      width: min(1040px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+    .hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.7;
+    }
+    .steps {
+      display: grid;
+      gap: 12px;
+    }
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .step .meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field { display: grid; gap: 8px; }
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+      background: #fff;
+    }
+    .field input:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      color: white;
+    }
+    .primary { background: var(--accent); }
+    .success { background: var(--accent-2); }
+    .ghost {
+      background: #64748b;
+    }
+    .status {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 52px;
+      white-space: pre-wrap;
+    }
+    .status.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+    .status.err { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+    .hidden { display: none !important; }
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #e0f2fe;
+      color: #075985;
+    }
+    @media (max-width: 880px) {
+      .grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>充电验证与下单</h1>
+      <p>先输入手机号做后端校验，验证通过后才会显示充电表单。真正的防线在 Python 后端，不在页面本身。</p>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <div class="panel-title">
+          <h2>步骤 1：手机号验证</h2>
+          <span class="badge" id="verify-badge">未验证</span>
+        </div>
+        <div class="hint">这里的验证是先发到本地电脑上的 Python 程序，由后端判断手机号是否在白名单中。只有后端返回成功，页面才会进入下一步。</div>
+
+        <div class="steps">
+          <div class="step">
+            <strong>输入手机号</strong>
+            <div class="form-grid">
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="phone">手机号</label>
+                <input id="phone" maxlength="11" inputmode="numeric" placeholder="请输入 11 位手机号" />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" id="verify-btn">验证手机号</button>
+              <button class="ghost" id="reset-btn" type="button">重置</button>
+            </div>
+            <div class="status" id="verify-status">等待验证。</div>
+          </div>
+
+          <div class="step hidden" id="charge-step">
+            <strong>步骤 2：选择充电信息</strong>
+            <div class="form-grid">
+              <div class="field">
+                <label for="station">站点号</label>
+                <input id="station" placeholder="例如 25" />
+              </div>
+              <div class="field">
+                <label for="sid">插座号</label>
+                <input id="sid" placeholder="例如 4" />
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="amount">金额（元）</label>
+                <input id="amount" placeholder="1 - 4 之间的数字" />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="success" id="charge-btn">开始充电</button>
+            </div>
+            <div class="status" id="charge-status">验证成功后在这里提交充电请求。</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="panel-title">
+          <h2>说明</h2>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <strong>为什么不能直接跳过验证</strong>
+            <div class="meta">页面只是前端展示。真正决定能不能充电的是后端接口，它会检查服务器会话里是否已经完成手机号验证。没有验证令牌，直接调用充电接口也会被拒绝。</div>
+          </div>
+          <div class="step">
+            <strong>你现在会得到什么</strong>
+            <div class="meta">一个独立的 Python 网页后端 + 一个单页 HTML 界面。适合先在本机跑通，再决定是否挂到 cpolar 或 GitHub Pages。</div>
+          </div>
+          <div class="step">
+            <strong>运行地址</strong>
+            <div class="meta">默认是 <code>http://127.0.0.1:8080</code>。后面如果你要暴露公网，就把这个本地端口交给 cpolar 去转发。</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const verifyBtn = document.getElementById('verify-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const chargeBtn = document.getElementById('charge-btn');
+    const verifyStatus = document.getElementById('verify-status');
+    const chargeStatus = document.getElementById('charge-status');
+    const chargeStep = document.getElementById('charge-step');
+    const verifyBadge = document.getElementById('verify-badge');
+
+    function setStatus(node, text, kind) {
+      node.className = 'status' + (kind ? ' ' + kind : '');
+      node.textContent = text;
+    }
+
+    async function api(path, data) {
+      const response = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || '请求失败');
+      }
+      return payload;
+    }
+
+    async function verifyPhone() {
+      const phone = document.getElementById('phone').value.trim();
+      setStatus(verifyStatus, '正在验证手机号...', '');
+      try {
+        const result = await api('/api/verify', { phone });
+        verifyBadge.textContent = '已验证';
+        setStatus(verifyStatus, `${result.message}\n手机号：${result.phone}`, 'ok');
+        chargeStep.classList.remove('hidden');
+      } catch (error) {
+        verifyBadge.textContent = '未验证';
+        chargeStep.classList.add('hidden');
+        setStatus(verifyStatus, error.message, 'err');
+      }
+    }
+
+    async function startCharge() {
+      const station_num = document.getElementById('station').value.trim();
+      const sid = document.getElementById('sid').value.trim();
+      const amount = document.getElementById('amount').value.trim();
+      setStatus(chargeStatus, '正在提交充电请求...', '');
+      try {
+        const result = await api('/api/charge', { station_num, sid, amount });
+        setStatus(chargeStatus, result.message, 'ok');
+      } catch (error) {
+        setStatus(chargeStatus, error.message, 'err');
+      }
+    }
+
+    function resetAll() {
+      document.getElementById('phone').value = '';
+      document.getElementById('station').value = '';
+      document.getElementById('sid').value = '';
+      document.getElementById('amount').value = '';
+      verifyBadge.textContent = '未验证';
+      chargeStep.classList.add('hidden');
+      setStatus(verifyStatus, '等待验证。', '');
+      setStatus(chargeStatus, '验证成功后在这里提交充电请求。', '');
+    }
+
+    verifyBtn.addEventListener('click', verifyPhone);
+    chargeBtn.addEventListener('click', startCharge);
+    resetBtn.addEventListener('click', resetAll);
+    document.getElementById('phone').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') verifyPhone();
+    });
+  </script>
+</body>
+</html>
