@@ -1022,7 +1022,7 @@
         payload = {};
       }
       if (!response.ok) {
-        throw new Error(payload.message || '请求失败');
+        throw new Error(payload.message || '服务器繁忙，请使用群聊机器人充电');
       }
       return payload;
     }
