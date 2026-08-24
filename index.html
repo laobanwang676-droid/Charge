@@ -775,33 +775,6 @@
         <section class="sidebar-card">
           <div class="panel-title">
             <div>
-              <h2>状态</h2>
-              <div class="sub">当前页面的验证状态。</div>
-            </div>
-          </div>
-          <div class="metric-grid">
-            <div class="metric">
-              <span class="label">验证状态</span>
-              <span class="value" id="metric-verify">未验证</span>
-            </div>
-            <div class="metric">
-              <span class="label">可用功能</span>
-              <span class="value">3 项</span>
-            </div>
-            <div class="metric">
-              <span class="label">服务状态</span>
-              <span class="value">正常</span>
-            </div>
-            <div class="metric">
-              <span class="label">响应方式</span>
-              <span class="value">即时</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="sidebar-card">
-          <div class="panel-title">
-            <div>
               <h2>输入规则</h2>
               <div class="sub">请按页面要求输入数字信息。</div>
             </div>
@@ -845,7 +818,6 @@
     const orderStatus = document.getElementById('order-status');
     const verifyBadge = document.getElementById('verify-badge');
     const sessionState = document.getElementById('session-state');
-    const metricVerify = document.getElementById('metric-verify');
 
     let sessionToken = '';
     let themeMode = 'light';
@@ -1061,7 +1033,7 @@
       sessionToken = token || '';
       verifyBadge.textContent = '已验证';
       sessionState.textContent = `已验证：${phone}`;
-      metricVerify.textContent = '已验证';
+      (document.getElementById('metric-verify') || {}).textContent = '已验证';
       openWorkbench();
     }
 
@@ -1076,7 +1048,7 @@
       });
       verifyBadge.textContent = '待验证';
       sessionState.textContent = '未验证';
-      metricVerify.textContent = '未验证';
+      (document.getElementById('metric-verify') || {}).textContent = '未验证';
       closeWorkbench();
       setStatus(verifyStatus, '等待验证。');
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
@@ -1136,7 +1108,7 @@
         sessionToken = '';
         verifyBadge.textContent = '待验证';
         sessionState.textContent = '未验证';
-        metricVerify.textContent = '未验证';
+        (document.getElementById('metric-verify') || {}).textContent = '未验证';
         closeWorkbench();
         setStatus(verifyStatus, error.message, 'err');
       } finally {
