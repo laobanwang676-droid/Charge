@@ -795,7 +795,7 @@
     <div class="pay-reminder-modal">
       <h3><span class="pay-success">支付成功！！！</span>请在10分钟内完成转账付款</h3>
       <p>备注充电插座号：<span class="pay-sid" id="pay-modal-sid"></span></p>
-      <p>群聊和私聊转账均可</p>
+      <p>群聊和私聊转账均可，付款金额：<strong id="pay-modal-amount"></strong>元</p>
       <p>未在规定时间内完成付款，将进行清退处理。</p>
       <p><strong>如果没充上，请看底部注意事项</strong></p>
       <button class="pay-modal-close" id="pay-modal-close" type="button">我知道了</button>
@@ -1156,7 +1156,7 @@
         setStatus(chargeStatus, result.message, 'ok');
         beginChargeCooldown(5);
         /* 功能1：充电成功后弹窗提醒付款 */
-        showPayReminder(station_num, sid);
+        showPayReminder(station_num, sid, amount);
         /* 功能2：记住站点号和插座号供查询页面复用 */
         saveChargeMemory(station_num, sid);
       } catch (error) {
@@ -1224,10 +1224,12 @@
     /* ===== 功能1：充电付款提醒弹窗 ===== */
     const payOverlay = document.getElementById('pay-reminder-overlay');
     const payModalSid = document.getElementById('pay-modal-sid');
+    const payModalAmount = document.getElementById('pay-modal-amount');
     const payModalClose = document.getElementById('pay-modal-close');
 
-    function showPayReminder(station, sid) {
+    function showPayReminder(station, sid, amount) {
       payModalSid.textContent = station + '-' + sid;
+      payModalAmount.textContent = (Number(amount) + 0.5).toFixed(1);
       payOverlay.classList.add('show');
     }
 
