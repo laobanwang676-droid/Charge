@@ -600,18 +600,31 @@
     .pay-reminder-modal h3 {
       margin: 0 0 14px;
       font-size: 17px;
-      color: var(--warning);
+      color: #333;
+    }
+
+    body.theme-dark .pay-reminder-modal h3 {
+      color: var(--text);
+    }
+
+    .pay-reminder-modal .pay-success {
+      color: var(--success);
     }
 
     .pay-reminder-modal p {
       margin: 0;
       font-size: 14px;
-      color: var(--text);
+      color: #333;
       line-height: 1.8;
     }
 
-    .pay-reminder-modal p strong {
-      color: var(--warning);
+    body.theme-dark .pay-reminder-modal p {
+      color: var(--text);
+    }
+
+    .pay-reminder-modal .pay-sid {
+      color: var(--accent);
+      font-weight: 600;
     }
 
     .pay-modal-close {
@@ -807,8 +820,8 @@
   <!-- 充电付款提醒弹窗 -->
   <div class="pay-reminder-overlay" id="pay-reminder-overlay">
     <div class="pay-reminder-modal">
-      <h3>支付成功！！！请在10分钟内完成转账付款</h3>
-      <p>备注充电插座号：<strong id="pay-modal-sid"></strong></p>
+      <h3><span class="pay-success">支付成功！！！</span>请在10分钟内完成转账付款</h3>
+      <p>备注充电插座号：<span class="pay-sid" id="pay-modal-sid"></span></p>
       <p>群聊和私聊转账均可</p>
       <p>未在规定时间内完成付款，将进行清退处理。</p>
       <button class="pay-modal-close" id="pay-modal-close" type="button">我知道了</button>
