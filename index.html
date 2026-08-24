@@ -1250,7 +1250,7 @@
         localStorage.setItem(CHARGE_MEMORY_KEY, JSON.stringify({ station: station, sid: sid }));
       } catch (_) { /* ignore */ }
     }
-
+ 
     function restoreChargeMemory() {
       try {
         var raw = localStorage.getItem(CHARGE_MEMORY_KEY);
