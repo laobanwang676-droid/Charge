@@ -87,6 +87,31 @@
       font-size: 13px;
     }
 
+    .contact-notice {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    .contact-notice strong {
+      color: var(--accent-strong);
+      font-weight: 600;
+    }
+
+    body.theme-dark .contact-notice {
+      background: rgba(79, 140, 255, 0.12);
+      border-color: rgba(79, 140, 255, 0.25);
+      color: #bcd0ff;
+    }
+
+    body.theme-dark .contact-notice strong {
+      color: #9cc0ff;
+    }
+
     .status-strip {
       display: flex;
       align-items: center;
@@ -525,6 +550,7 @@
       <div class="brand">
         <h1>充电控制台</h1>
         <p>手机号验证通过后，可继续进行充电、功率查询和订单查询。</p>
+        <p class="contact-notice">📱 手机号白名单添加请联系微信：<strong>1944505795</strong></p>
       </div>
       <div class="status-strip">
         <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
