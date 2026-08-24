@@ -1005,11 +1005,16 @@
       if (sessionToken) {
         headers.Authorization = `Bearer ${sessionToken}`;
       }
-      const response = await fetch(`${API_BASE}${path}`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(data),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE}${path}`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        });
+      } catch (_) {
+        throw new Error('服务器繁忙，请使用群聊机器人充电');
+      }
       let payload = {};
       try {
         payload = await response.json();
