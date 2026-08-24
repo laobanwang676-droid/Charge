@@ -576,11 +576,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(6px);
+      background: rgba(0, 0, 0, 0.4);
       opacity: 0;
       visibility: hidden;
-      transition: opacity .25s ease, visibility .25s ease;
+      transition: opacity .2s ease, visibility .2s ease;
     }
 
     .pay-reminder-overlay.show {
@@ -589,153 +588,45 @@
     }
 
     .pay-reminder-modal {
-      width: min(440px, calc(100% - 32px));
-      padding: 0;
-      border-radius: 20px;
+      width: min(400px, calc(100% - 32px));
+      padding: 24px;
+      border-radius: 16px;
       border: 1px solid var(--line);
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.25);
-      transform: translateY(24px) scale(0.96);
-      transition: transform .25s ease;
-      overflow: hidden;
+      background: var(--panel);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      text-align: center;
     }
 
-    .pay-reminder-overlay.show .pay-reminder-modal {
-      transform: translateY(0) scale(1);
+    .pay-reminder-modal h3 {
+      margin: 0 0 14px;
+      font-size: 17px;
+      color: var(--warning);
     }
 
-    .pay-modal-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 22px 24px 16px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(217, 119, 6, 0.06);
-    }
-
-    .pay-modal-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #fff;
-      font-size: 22px;
-      flex: none;
-      box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3);
-    }
-
-    .pay-modal-title {
+    .pay-reminder-modal p {
       margin: 0;
-      font-size: 18px;
-      color: var(--text);
-    }
-
-    .pay-modal-subtitle {
-      margin: 4px 0 0;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .pay-modal-body {
-      padding: 20px 24px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .pay-modal-highlight {
-      padding: 14px 16px;
-      border-radius: 14px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.22);
       font-size: 14px;
       color: var(--text);
-      line-height: 1.75;
+      line-height: 1.8;
     }
 
-    .pay-modal-highlight strong {
-      color: #b45309;
-    }
-
-    body.theme-dark .pay-modal-highlight {
-      background: rgba(245, 158, 11, 0.14);
-      border-color: rgba(245, 158, 11, 0.28);
-    }
-
-    body.theme-dark .pay-modal-highlight strong {
-      color: #fbbf24;
-    }
-
-    .pay-modal-timer {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: rgba(239, 68, 68, 0.08);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      font-size: 14px;
-      font-weight: 600;
-      color: #dc2626;
-    }
-
-    body.theme-dark .pay-modal-timer {
-      background: rgba(239, 68, 68, 0.12);
-      border-color: rgba(239, 68, 68, 0.25);
-      color: #fca5a5;
-    }
-
-    .pay-modal-timer svg {
-      flex: none;
-    }
-
-    .pay-modal-memo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: rgba(37, 99, 235, 0.08);
-      border: 1px solid rgba(37, 99, 235, 0.2);
-      font-size: 14px;
-      color: var(--accent);
-    }
-
-    body.theme-dark .pay-modal-memo {
-      background: rgba(79, 140, 255, 0.12);
-      border-color: rgba(79, 140, 255, 0.25);
-      color: #bcd0ff;
-    }
-
-    .pay-modal-memo strong {
-      font-weight: 600;
-    }
-
-    .pay-modal-footer {
-      padding: 16px 24px 20px;
-      border-top: 1px solid var(--line);
-      display: flex;
-      justify-content: flex-end;
+    .pay-reminder-modal p strong {
+      color: var(--warning);
     }
 
     .pay-modal-close {
-      padding: 11px 28px;
-      border-radius: 12px;
+      margin-top: 20px;
+      padding: 10px 32px;
+      border-radius: 10px;
       border: 0;
-      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      background: var(--accent);
       color: #fff;
       font-size: 14px;
-      font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 8px 20px rgba(47, 107, 255, 0.2);
-      transition: transform .15s ease, box-shadow .15s ease;
     }
 
     .pay-modal-close:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 28px rgba(47, 107, 255, 0.3);
+      opacity: 0.9;
     }
 
     @media (max-width: 980px) {
@@ -916,31 +807,11 @@
   <!-- 充电付款提醒弹窗 -->
   <div class="pay-reminder-overlay" id="pay-reminder-overlay">
     <div class="pay-reminder-modal">
-      <div class="pay-modal-header">
-        <div class="pay-modal-icon">⚠</div>
-        <div>
-          <h3 class="pay-modal-title">充电已提交，请及时付款</h3>
-          <p class="pay-modal-subtitle">为保障正常使用，请在规定时间内完成转账</p>
-        </div>
-      </div>
-      <div class="pay-modal-body">
-        <div class="pay-modal-highlight">
-          请在 <strong>10 分钟内</strong> 完成转账付款，转账时请备注：<br/>
-          <strong>充电插座号 <span id="pay-modal-sid"></span></strong><br/>
-          未在规定时间内完成付款，将进行清退处理。
-        </div>
-        <div class="pay-modal-timer">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>剩余时间：<strong id="pay-modal-countdown">10:00</strong></span>
-        </div>
-        <div class="pay-modal-memo">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          <span>备注内容：<strong id="pay-modal-memo-text"></strong></span>
-        </div>
-      </div>
-      <div class="pay-modal-footer">
-        <button class="pay-modal-close" id="pay-modal-close" type="button">我知道了</button>
-      </div>
+      <h3>⚠ 请在10分钟内完成转账付款</h3>
+      <p>备注充电插座号：<strong id="pay-modal-sid"></strong></p>
+      <p>群聊和私聊转账均可</p>
+      <p>未在规定时间内完成付款，将进行清退处理。</p>
+      <button class="pay-modal-close" id="pay-modal-close" type="button">我知道了</button>
     </div>
   </div>
 
@@ -969,7 +840,6 @@
     let verifyInFlight = false;
     let chargeCooldownUntil = 0;
     let chargeInFlight = false;
-    let payReminderTimer = null;
 
     const fieldGroups = {
       phone: { input: document.getElementById('phone'), error: document.getElementById('phone-error') },
@@ -1295,7 +1165,7 @@
         setStatus(chargeStatus, result.message, 'ok');
         beginChargeCooldown(5);
         /* 功能1：充电成功后弹窗提醒付款 */
-        showPayReminder(sid);
+        showPayReminder(station_num, sid);
         /* 功能2：记住站点号和插座号供查询页面复用 */
         saveChargeMemory(station_num, sid);
       } catch (error) {
@@ -1363,36 +1233,15 @@
     /* ===== 功能1：充电付款提醒弹窗 ===== */
     const payOverlay = document.getElementById('pay-reminder-overlay');
     const payModalSid = document.getElementById('pay-modal-sid');
-    const payModalMemo = document.getElementById('pay-modal-memo-text');
-    const payModalCountdown = document.getElementById('pay-modal-countdown');
     const payModalClose = document.getElementById('pay-modal-close');
 
-    function showPayReminder(sid) {
-      if (payReminderTimer) { clearInterval(payReminderTimer); payReminderTimer = null; }
-      payModalSid.textContent = sid;
-      payModalMemo.textContent = sid;
-      var deadline = Date.now() + 10 * 60 * 1000;
-
-      function tick() {
-        var left = Math.max(0, deadline - Date.now());
-        var m = Math.floor(left / 60000);
-        var s = Math.floor((left % 60000) / 1000);
-        payModalCountdown.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-        if (left <= 0) {
-          clearInterval(payReminderTimer);
-          payReminderTimer = null;
-          payModalCountdown.textContent = '已超时';
-        }
-      }
-
-      tick();
-      payReminderTimer = setInterval(tick, 1000);
+    function showPayReminder(station, sid) {
+      payModalSid.textContent = station + '-' + sid;
       payOverlay.classList.add('show');
     }
 
     function closePayReminder() {
       payOverlay.classList.remove('show');
-      if (payReminderTimer) { clearInterval(payReminderTimer); payReminderTimer = null; }
     }
 
     payModalClose.addEventListener('click', closePayReminder);
