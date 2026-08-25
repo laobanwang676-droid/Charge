@@ -287,6 +287,51 @@
       color: #ff9b9b;
     }
 
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrapper input {
+      padding-right: 44px;
+    }
+
+    .toggle-pwd {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      transition: color .18s ease, background .18s ease;
+    }
+
+    .toggle-pwd svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toggle-pwd:hover {
+      color: var(--text);
+      background: rgba(148, 163, 184, 0.12);
+      transform: translateY(-50%);
+    }
+
     .actions {
       display: flex;
       gap: 10px;
@@ -310,7 +355,8 @@
     .btn-primary { background: linear-gradient(180deg, var(--accent), var(--accent-strong)); box-shadow: 0 16px 30px rgba(47, 107, 255, 0.25); }
     .btn-secondary { background: rgba(148, 163, 184, 0.22); border: 1px solid rgba(148, 163, 184, 0.18); }
     .btn-success { background: linear-gradient(180deg, #28c76f, #16a34a); box-shadow: 0 16px 30px rgba(34, 197, 94, 0.18); }
-    .btn-ghost { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(148, 163, 184, 0.18); color: #d8e4f8; }
+    .btn-ghost { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(148, 163, 184, 0.18); color: var(--muted); }
+    .btn-ghost:hover { background: rgba(148, 163, 184, 0.12); color: var(--text); }
 
     .notice {
       min-height: 56px;
@@ -834,7 +880,12 @@
               </div>
               <div class="field full">
                 <label for="password">密码</label>
-                <input id="password" type="text" maxlength="32" placeholder="请输入密码（不少于6位）" autocomplete="off" />
+                <div class="password-wrapper">
+                  <input id="password" type="password" maxlength="32" placeholder="请输入密码（不少于6位）" autocomplete="new-password" />
+                  <button class="toggle-pwd" id="toggle-pwd" type="button" title="显示密码">
+                    <svg id="eye-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
                 <div class="field-error" id="password-error"></div>
               </div>
             </div>
@@ -846,10 +897,13 @@
           </div>
 
           <div class="workbench hidden" id="workbench">
-            <div class="tabs" role="tablist" aria-label="充电操作切换">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+              <div class="tabs" role="tablist" aria-label="充电操作切换">
               <button class="tab active" data-tab="charge">充电</button>
               <button class="tab" data-tab="power">功率查询</button>
               <button class="tab" data-tab="order">订单查询</button>
+              </div>
+              <button class="btn-ghost" id="logout-btn" type="button" style="padding:8px 16px; border-radius:10px; font-size:13px; white-space:nowrap;">← 返回登录</button>
             </div>
 
             <div class="tab-panels">
@@ -1222,6 +1276,7 @@
       const loggedUser = document.getElementById('logged-user');
       loggedUser.textContent = masked + ' 账号已登录';
       loggedUser.classList.remove('hidden');
+      document.querySelector('.verify-card').classList.add('hidden');
       openWorkbench();
     }
 
@@ -1245,6 +1300,7 @@
       loggedUser.textContent = '';
       loggedUser.classList.add('hidden');
       closeWorkbench();
+      document.querySelector('.verify-card').classList.remove('hidden');
       setStatus(verifyStatus, '请输入手机号和密码登录。');
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
       setStatus(powerStatus, '验证成功后可查询当前功率。');
@@ -1560,6 +1616,18 @@
       if (event.key === 'Enter') handleAuth();
     });
 
+    /* ===== 密码显示/隐藏切换 ===== */
+    const eyeShowSVG = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>';
+    const eyeHideSVG = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/>';
+    document.getElementById('toggle-pwd').addEventListener('click', function() {
+      const pwdInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eye-icon');
+      const isHidden = pwdInput.type === 'password';
+      pwdInput.type = isHidden ? 'text' : 'password';
+      eyeIcon.innerHTML = isHidden ? eyeHideSVG : eyeShowSVG;
+      this.title = isHidden ? '隐藏密码' : '显示密码';
+    });
+
     window.setInterval(updateChargeButtonState, 250);
     window.setInterval(updateVerifyButtonState, 250);
 
@@ -1632,6 +1700,27 @@
     if (!tryAutoLogin()) {
       resetAll();
     }
+
+    /* ===== 返回登录按钮 ===== */
+    document.getElementById('logout-btn').addEventListener('click', function() {
+      sessionToken = '';
+      clearAuthSession();
+      document.querySelector('.verify-card').classList.remove('hidden');
+      closeWorkbench();
+      const loggedUser = document.getElementById('logged-user');
+      loggedUser.textContent = '';
+      loggedUser.classList.add('hidden');
+      setStatus(verifyStatus, '请输入手机号和密码登录。');
+      setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
+      setStatus(powerStatus, '验证成功后可查询当前功率。');
+      setStatus(orderStatus, '验证成功后可查询最近订单。');
+      authMode = 'login';
+      document.querySelectorAll('.mode-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.mode === 'login');
+      });
+      verifyBtn.textContent = '登录';
+      updateVerifyButtonState();
+    });
 
     document.getElementById('copy-wx-btn').addEventListener('click', function() {
       const text = document.getElementById('wx-id').textContent;
