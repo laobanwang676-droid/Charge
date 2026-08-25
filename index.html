@@ -1240,6 +1240,15 @@
       } catch (_) {
         payload = {};
       }
+
+      // 检测token失效（401），自动跳回登录页
+      if (response.status === 401) {
+        sessionToken = '';
+        clearAuthSession();
+        resetAll();
+        throw new Error('登录已过期，请重新登录');
+      }
+
       if (!response.ok) {
         throw new Error(payload.message || '服务器繁忙，请使用群聊机器人充电');
       }
@@ -1280,6 +1289,37 @@
 
     function clearAuthSession() {
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) { /* ignore */ }
+    }
+
+    /* ===== Token 有效性校验（每次刷新页面时调用） ===== */
+    async function validateToken() {
+      if (!sessionToken) return false;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` };
+        const response = await fetch(`${API_BASE}/api/auth`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ action: 'verify' }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        let payload = {};
+        try { payload = await response.json(); } catch (_) { payload = {}; }
+
+        // 后端期望返回 { code: 0, valid: true, message: "..." }
+        // token有效：HTTP 200 且 payload.valid === true
+        // token无效/过期：HTTP 401 或 payload.valid === false
+        if (response.ok && payload.valid === true) {
+          return true;
+        }
+        return false;
+      } catch (_) {
+        // 网络异常等情况，保守处理为token无效
+        return false;
+      }
     }
 
     function setLoggedInUI(phone) {
@@ -1735,24 +1775,37 @@
       });
     });
 
-    /* ===== 自动登录（7天有效） ===== */
-    function tryAutoLogin() {
+    /* ===== 自动登录（7天有效 + Token校验） ===== */
+    async function tryAutoLogin() {
       const session = loadAuthSession();
-      if (session && session.token) {
-        sessionToken = session.token;
-        setLoggedInUI(session.phone);
-        setStatus(verifyStatus, `欢迎回来，${session.phone} 账号已自动登录。`, 'ok');
-        return true;
+      if (!session || !session.token) return false;
+
+      // 先恢复token，然后向后端校验是否仍然有效
+      sessionToken = session.token;
+      setStatus(verifyStatus, '正在校验登录状态...');
+      const valid = await validateToken();
+      if (!valid) {
+        // token已失效（后端重启等），清除本地缓存，回到登录页
+        sessionToken = '';
+        clearAuthSession();
+        return false;
       }
-      return false;
+
+      // token有效，进入工作台
+      setLoggedInUI(session.phone);
+      setStatus(verifyStatus, `欢迎回来，${session.phone} 账号已自动登录。`, 'ok');
+      return true;
     }
 
-    /* 页面加载时先检测服务器状态 */
+    /* 页面加载时先检测服务器状态，然后校验token */
     checkServerHealth();
 
-    if (!tryAutoLogin()) {
-      resetAll();
-    }
+    (async function init() {
+      const loggedIn = await tryAutoLogin();
+      if (!loggedIn) {
+        resetAll();
+      }
+    })();
 
     /* ===== 返回登录按钮 ===== */
     document.getElementById('logout-btn').addEventListener('click', async function() {
