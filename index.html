@@ -1252,7 +1252,6 @@
         response = await fetch(`${API_BASE}${path}`, {
           method: 'POST',
           headers,
-          credentials: 'include',
           body: JSON.stringify(data),
         });
       } catch (_) {
@@ -1327,7 +1326,6 @@
         const response = await fetch(`${API_BASE}/api/auth`, {
           method: 'POST',
           headers,
-          credentials: 'include',
           body: JSON.stringify({ action: 'verify' }),
           signal: controller.signal,
         });
@@ -1784,7 +1782,7 @@
       });
     });
 
-    /* ===== 自动登录（7天有效 + Cookie校验） ===== */
+    /* ===== 自动登录 ===== */
     async function tryAutoLogin() {
       setStatus(verifyStatus, '正在校验登录状态...');
       const phone = await validateToken();
