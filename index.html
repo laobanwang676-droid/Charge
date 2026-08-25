@@ -586,40 +586,34 @@
     .theme-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin-left: 10px;
-      padding: 9px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.72);
-      color: var(--text);
-    }
-
-    .toggle-switch {
-      position: relative;
+      justify-content: center;
       width: 42px;
-      height: 24px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.35);
-      flex: none;
-      transition: background .18s ease;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.72);
+      cursor: pointer;
+      transition: background .18s ease, transform .18s ease;
+      padding: 0;
     }
 
-    .toggle-switch::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
-      transition: transform .18s ease;
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .sun-icon {
+      width: 22px;
+      height: 22px;
+      color: var(--text);
     }
 
     body.theme-dark .theme-toggle {
       background: rgba(15, 25, 41, 0.85);
+    }
+
+    body.theme-dark .theme-toggle:hover {
+      background: rgba(15, 25, 41, 0.95);
     }
 
     body.theme-dark .chip {
@@ -690,14 +684,6 @@
     body.theme-dark code {
       background: rgba(79, 140, 255, 0.14);
       color: #bcd0ff;
-    }
-
-    body.theme-dark .toggle-switch {
-      background: rgba(79, 140, 255, 0.55);
-    }
-
-    body.theme-dark .toggle-switch::after {
-      transform: translateX(18px);
     }
 
     .pay-reminder-overlay {
@@ -838,12 +824,8 @@
     }
 
     @media (max-width: 980px) {
-      .topbar { justify-items: start; text-align: left; }
-      .brand { justify-items: start; max-width: none; }
-      .status-strip { justify-content: flex-start; }
       .layout { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
-      .status-strip { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -855,16 +837,23 @@
         <p>登录后可进行充电、功率查询和订单查询。</p>
         <p class="contact-notice">📱 注册审核、退款和微信群机器人充电请加微信：<strong id="wx-id">1944505795</strong><button class="copy-btn" id="copy-wx-btn" type="button" title="复制微信号">复制</button></p>
       </div>
-      <div class="status-strip">
-        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
-          <span class="toggle-switch" aria-hidden="true"></span>
-          <span id="theme-label">浅色</span>
-        </button>
-        <div class="server-status" id="server-status">
-          <span class="status-dot checking" id="server-dot"></span>
-          <span class="status-text checking" id="server-text">正在检测...</span>
-        </div>
+      <div class="server-status" id="server-status">
+        <span class="status-dot checking" id="server-dot"></span>
+        <span class="status-text checking" id="server-text">正在检测...</span>
       </div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" title="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="10.5" y="1" width="3" height="4" rx="0.8" fill="currentColor"/>
+          <rect x="10.5" y="19" width="3" height="4" rx="0.8" fill="currentColor"/>
+          <rect x="1" y="10.5" width="4" height="3" rx="0.8" fill="currentColor"/>
+          <rect x="19" y="10.5" width="4" height="3" rx="0.8" fill="currentColor"/>
+          <rect x="3.82" y="3.11" width="3" height="4" rx="0.8" fill="currentColor" transform="rotate(-45 5.31 5.11)"/>
+          <rect x="17.18" y="16.89" width="3" height="4" rx="0.8" fill="currentColor" transform="rotate(-45 18.69 18.89)"/>
+          <rect x="3.82" y="16.89" width="3" height="4" rx="0.8" fill="currentColor" transform="rotate(45 5.31 18.89)"/>
+          <rect x="17.18" y="3.11" width="3" height="4" rx="0.8" fill="currentColor" transform="rotate(45 18.69 5.11)"/>
+          <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
+        </svg>
+      </button>
     </header>
 
     <main class="layout">
@@ -1037,7 +1026,6 @@
     const verifyBtn = document.getElementById('verify-btn');
     const resetBtn = document.getElementById('reset-btn');
     const themeToggle = document.getElementById('theme-toggle');
-    const themeLabel = document.getElementById('theme-label');
     const chargeBtn = document.getElementById('charge-btn');
     const powerBtn = document.getElementById('power-btn');
     const orderBtn = document.getElementById('order-btn');
@@ -1089,7 +1077,6 @@
       themeMode = mode === 'dark' ? 'dark' : 'light';
       document.body.classList.toggle('theme-dark', themeMode === 'dark');
       themeToggle.setAttribute('aria-pressed', String(themeMode === 'dark'));
-      themeLabel.textContent = themeMode === 'dark' ? '深色' : '浅色';
     }
 
     function toggleTheme() {
