@@ -1341,7 +1341,7 @@
     }
 
     function setLoggedInUI(phone) {
-      const masked = phone.length === 11 ? phone.substring(0, 3) + '****' + phone.substring(7) : phone;
+      const masked = phone.length === 11 ? '***' + phone.substring(7) : phone;
       const loggedUser = document.getElementById('logged-user');
       loggedUser.textContent = masked + ' 账号已登录';
       loggedUser.classList.remove('hidden');
