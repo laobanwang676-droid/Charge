@@ -109,7 +109,7 @@
     }
 
     body.theme-dark .contact-notice strong {
-      color: #9cc0ff;
+      color: #ffffff;
     }
 
     .copy-btn {
@@ -136,7 +136,7 @@
     body.theme-dark .copy-btn {
       background: rgba(79, 140, 255, 0.15);
       border-color: rgba(79, 140, 255, 0.3);
-      color: #bcd0ff;
+      color: #ffffff;
     }
 
     body.theme-dark .copy-btn:hover {
@@ -445,6 +445,80 @@
 
     .hidden { display: none !important; }
 
+    /* 服务器状态指示器 */
+    .server-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .server-status .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .server-status .status-dot.online {
+      background: #16a34a;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    .server-status .status-dot.offline {
+      background: #dc2626;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+
+    .server-status .status-dot.checking {
+      background: #d97706;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+      animation: pulse-checking 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-checking {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .server-status .status-text {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .server-status .status-text.online {
+      color: #16a34a;
+    }
+
+    .server-status .status-text.offline {
+      color: #dc2626;
+    }
+
+    .server-status .status-text.checking {
+      color: #d97706;
+    }
+
+    body.theme-dark .server-status {
+      background: rgba(15, 25, 41, 0.82);
+    }
+
+    body.theme-dark .server-status .status-text.online {
+      color: #4ade80;
+    }
+
+    body.theme-dark .server-status .status-text.offline {
+      color: #f87171;
+    }
+
+    body.theme-dark .server-status .status-text.checking {
+      color: #fbbf24;
+    }
+
     code {
       padding: 2px 6px;
       border-radius: 8px;
@@ -662,7 +736,10 @@
           <span class="toggle-switch" aria-hidden="true"></span>
           <span id="theme-label">浅色</span>
         </button>
-        <div class="chip"><strong id="session-state">未验证</strong></div>
+        <div class="server-status" id="server-status">
+          <span class="status-dot checking" id="server-dot"></span>
+          <span class="status-text checking" id="server-text">正在检测...</span>
+        </div>
       </div>
     </header>
 
@@ -818,7 +895,8 @@
     const powerStatus = document.getElementById('power-status');
     const orderStatus = document.getElementById('order-status');
     const verifyBadge = document.getElementById('verify-badge');
-    const sessionState = document.getElementById('session-state');
+    const serverDot = document.getElementById('server-dot');
+    const serverText = document.getElementById('server-text');
 
     let sessionToken = '';
     let themeMode = 'light';
@@ -1038,8 +1116,6 @@
     function setVerifiedUI(phone, token) {
       sessionToken = token || '';
       verifyBadge.textContent = '已验证';
-      sessionState.textContent = `已验证：${phone}`;
-      (document.getElementById('metric-verify') || {}).textContent = '已验证';
       openWorkbench();
     }
 
@@ -1053,8 +1129,6 @@
         setFieldError(group, '');
       });
       verifyBadge.textContent = '待验证';
-      sessionState.textContent = '未验证';
-      (document.getElementById('metric-verify') || {}).textContent = '未验证';
       closeWorkbench();
       setStatus(verifyStatus, '等待验证。');
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
@@ -1113,8 +1187,6 @@
         }
         sessionToken = '';
         verifyBadge.textContent = '待验证';
-        sessionState.textContent = '未验证';
-        (document.getElementById('metric-verify') || {}).textContent = '未验证';
         closeWorkbench();
         setStatus(verifyStatus, error.message, 'err');
       } finally {
@@ -1321,6 +1393,40 @@
     } catch (_) {
       applyTheme('light');
     }
+
+    /* ===== 功能3：服务器健康检测 ===== */
+    async function checkServerHealth() {
+      serverDot.className = 'status-dot checking';
+      serverText.className = 'status-text checking';
+      serverText.textContent = '正在检测...';
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const response = await fetch(`${API_BASE}/api/health`, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          serverDot.className = 'status-dot online';
+          serverText.className = 'status-text online';
+          serverText.textContent = '服务器正常';
+        } else {
+          serverDot.className = 'status-dot offline';
+          serverText.className = 'status-text offline';
+          serverText.textContent = '服务器异常';
+        }
+      } catch (_) {
+        serverDot.className = 'status-dot offline';
+        serverText.className = 'status-text offline';
+        serverText.textContent = '服务器异常';
+      }
+    }
+
+    /* 页面加载时先检测服务器状态 */
+    checkServerHealth();
 
     resetAll();
 
