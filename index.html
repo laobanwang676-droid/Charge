@@ -216,10 +216,11 @@
 
     .panel-title {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
+      align-items: center;
+      justify-content: center;
       gap: 12px;
       margin-bottom: 6px;
+      text-align: center;
     }
 
     .panel-title h2 {
@@ -601,7 +602,7 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      border: none;
+      border: 1.5px solid var(--muted);
       background: rgba(255, 255, 255, 0.72);
       cursor: pointer;
       transition: background .18s ease, transform .18s ease;
@@ -621,6 +622,7 @@
 
     body.theme-dark .theme-toggle {
       background: rgba(15, 25, 41, 0.85);
+      border-color: rgba(148, 163, 184, 0.35);
     }
 
     body.theme-dark .theme-toggle:hover {
@@ -853,6 +855,14 @@
           <span class="status-dot checking" id="server-dot"></span>
           <span class="status-text checking" id="server-text">正在检测...</span>
         </div>
+        <span class="logged-user hidden" id="logged-user"></span>
+        <button class="theme-toggle logout-icon hidden" id="logout-btn" type="button" title="退出登录">
+          <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" title="切换主题">
         <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
           <rect x="10.5" y="1" width="3" height="4" rx="0.8" fill="currentColor"/>
@@ -875,10 +885,9 @@
           <div class="panel-title">
             <div>
               <h2>身份验证与操作台</h2>
-              <div class="sub">登录后可进行充电、功率查询和订单查询。站点号、插座号、金额都需要是纯数字。</div>
+              <div class="sub">登录后可进行充电、功率查询和订单查询。</div>
             </div>
             <span class="badge hidden" id="verify-badge">已验证</span>
-            <span class="logged-user hidden" id="logged-user"></span>
           </div>
         </div>
 
@@ -923,13 +932,12 @@
           </div>
 
           <div class="workbench hidden" id="workbench">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
               <div class="tabs" role="tablist" aria-label="充电操作切换">
               <button class="tab active" data-tab="charge">充电</button>
               <button class="tab" data-tab="power">功率查询</button>
               <button class="tab" data-tab="order">订单查询</button>
               </div>
-              <button class="btn-ghost" id="logout-btn" type="button" style="padding:8px 16px; border-radius:10px; font-size:13px; white-space:nowrap;">← 返回登录</button>
             </div>
 
             <div class="tab-panels">
@@ -951,11 +959,10 @@
                     <div class="field-error" id="charge-amount-error"></div>
                   </div>
                 </div>
-                <div class="actions" style="margin-top: 14px;">
+                <div class="actions" style="margin-top: 8px;">
                   <button class="btn-success" id="charge-btn">开始充电</button>
                 </div>
-                <div class="notice" id="charge-status">验证成功后可在这里发起充电请求。</div>
-                <div class="helper">站点状态正常、插座空闲、金额为 1-4 元时才会继续下一步。</div>
+                <div class="notice" id="charge-status" style="margin-top: 12px;">验证成功后可在这里发起充电请求。</div>
               </section>
 
               <section class="tab-panel" id="tab-power">
@@ -971,10 +978,10 @@
                     <div class="field-error" id="power-sid-error"></div>
                   </div>
                 </div>
-                <div class="actions" style="margin-top: 14px;">
+                <div class="actions" style="margin-top: 8px;">
                   <button class="btn-primary" id="power-btn">查询功率</button>
                 </div>
-                <div class="notice" id="power-status">验证成功后可查询指定插座当前功率。</div>
+                <div class="notice" id="power-status" style="margin-top: 12px;">验证成功后可查询指定插座当前功率。</div>
                 <div class="helper">显示功率结果。</div>
               </section>
 
@@ -991,10 +998,10 @@
                     <div class="field-error" id="order-sid-error"></div>
                   </div>
                 </div>
-                <div class="actions" style="margin-top: 14px;">
+                <div class="actions" style="margin-top: 8px;">
                   <button class="btn-primary" id="order-btn">查询订单</button>
                 </div>
-                <div class="notice" id="order-status">验证成功后可查询指定插座最近订单。</div>
+                <div class="notice" id="order-status" style="margin-top: 12px;">验证成功后可查询指定插座最近订单。</div>
                 <div class="helper">会显示最近48h内完成的订单信息。</div>
               </section>
             </div>
@@ -1267,10 +1274,12 @@
 
     function openWorkbench() {
       workbench.classList.remove('hidden');
+      document.getElementById('logout-btn').classList.remove('hidden');
     }
 
     function closeWorkbench() {
       workbench.classList.add('hidden');
+      document.getElementById('logout-btn').classList.add('hidden');
     }
 
     /* ===== 7天登录持久化 ===== */
