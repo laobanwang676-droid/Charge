@@ -1331,19 +1331,19 @@
         // session有效：HTTP 200 且 payload.valid === true
         // session无效/过期：HTTP 401 或 payload.valid === false
         if (response.ok && payload.valid === true) {
-          return true;
+          return payload.phone || null;
         }
-        return false;
+        return null;
       } catch (_) {
         // 网络异常等情况，保守处理为token无效
-        return false;
+        return null;
       }
     }
 
     function setLoggedInUI(phone) {
       const masked = phone.length === 11 ? '***' + phone.substring(7) : phone;
       const loggedUser = document.getElementById('logged-user');
-      loggedUser.textContent = masked + ' 账号已登录';
+      loggedUser.textContent = masked + ' 已登录';
       loggedUser.classList.remove('hidden');
       document.querySelector('.verify-card').classList.add('hidden');
       openWorkbench();
@@ -1775,22 +1775,19 @@
       });
     });
 
-    /* ===== 自动登录（7天有效 + Token校验） ===== */
+    /* ===== 自动登录（7天有效 + Cookie校验） ===== */
     async function tryAutoLogin() {
-      const session = loadAuthSession();
-      if (!session || !session.phone) return false;
-
       setStatus(verifyStatus, '正在校验登录状态...');
-      const valid = await validateToken();
-      if (!valid) {
+      const phone = await validateToken();
+      if (!phone) {
         // 会话已失效，清除本地缓存，回到登录页
         clearAuthSession();
         return false;
       }
 
       // token有效，进入工作台
-      setLoggedInUI(session.phone);
-      setStatus(verifyStatus, `欢迎回来，${session.phone} 账号已自动登录。`, 'ok');
+      setLoggedInUI(phone);
+      setStatus(verifyStatus, `欢迎回来，${phone} 账号已自动登录。`, 'ok');
       return true;
     }
 
