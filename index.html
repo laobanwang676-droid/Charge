@@ -1702,12 +1702,20 @@
     }
 
     /* ===== 返回登录按钮 ===== */
-    document.getElementById('logout-btn').addEventListener('click', function() {
+    document.getElementById('logout-btn').addEventListener('click', async function() {
+      var logoutBtn = this;
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = '退出中...';
+      try {
+        await api('/api/logout', {});
+      } catch (_) {
+        /* 即使后端请求失败，前端也继续登出 */
+      }
       sessionToken = '';
       clearAuthSession();
       document.querySelector('.verify-card').classList.remove('hidden');
       closeWorkbench();
-      const loggedUser = document.getElementById('logged-user');
+      var loggedUser = document.getElementById('logged-user');
       loggedUser.textContent = '';
       loggedUser.classList.add('hidden');
       setStatus(verifyStatus, '请输入手机号和密码登录。');
@@ -1719,6 +1727,8 @@
         t.classList.toggle('active', t.dataset.mode === 'login');
       });
       verifyBtn.textContent = '登录';
+      logoutBtn.disabled = false;
+      logoutBtn.textContent = '← 返回登录';
       updateVerifyButtonState();
     });
 
