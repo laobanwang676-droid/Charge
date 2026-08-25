@@ -888,6 +888,16 @@
                 </div>
                 <div class="field-error" id="password-error"></div>
               </div>
+              <div class="field full hidden" id="confirm-password-field">
+                <label for="confirm-password">确认密码</label>
+                <div class="password-wrapper">
+                  <input id="confirm-password" type="password" maxlength="32" placeholder="请再次输入密码" autocomplete="new-password" />
+                  <button class="toggle-pwd" id="toggle-pwd2" type="button" title="显示密码">
+                    <svg id="eye-icon2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <div class="field-error" id="confirm-password-error"></div>
+              </div>
             </div>
             <div class="actions">
               <button class="btn-primary" id="verify-btn">登录</button>
@@ -1037,6 +1047,7 @@
     const fieldGroups = {
       phone: { input: document.getElementById('phone'), error: document.getElementById('phone-error') },
       password: { input: document.getElementById('password'), error: document.getElementById('password-error') },
+      confirmPassword: { input: document.getElementById('confirm-password'), error: document.getElementById('confirm-password-error') },
       chargeStation: { input: document.getElementById('charge-station'), error: document.getElementById('charge-station-error') },
       chargeSid: { input: document.getElementById('charge-sid'), error: document.getElementById('charge-sid-error') },
       chargeAmount: { input: document.getElementById('charge-amount'), error: document.getElementById('charge-amount-error') },
@@ -1296,6 +1307,7 @@
         group.input.value = '';
         setFieldError(group, '');
       });
+      toggleConfirmPasswordField(false);
       const loggedUser = document.getElementById('logged-user');
       loggedUser.textContent = '';
       loggedUser.classList.add('hidden');
@@ -1332,6 +1344,21 @@
       return true;
     }
 
+    function validateConfirmPassword() {
+      const pwd = fieldGroups.password.input.value.trim();
+      const confirm = fieldGroups.confirmPassword.input.value.trim();
+      if (!confirm) {
+        setFieldError(fieldGroups.confirmPassword, '请再次输入密码');
+        return false;
+      }
+      if (pwd !== confirm) {
+        setFieldError(fieldGroups.confirmPassword, '两次输入的密码不一致');
+        return false;
+      }
+      setFieldError(fieldGroups.confirmPassword, '');
+      return true;
+    }
+
     async function handleAuth() {
       clearFieldErrors();
       if (!validatePhone()) {
@@ -1340,6 +1367,10 @@
       }
       if (!validatePassword()) {
         setStatus(verifyStatus, '密码输入有误，请检查后再提交。', 'err');
+        return;
+      }
+      if (authMode === 'register' && !validateConfirmPassword()) {
+        setStatus(verifyStatus, '两次输入的密码不一致，请检查后再提交。', 'err');
         return;
       }
 
@@ -1364,7 +1395,7 @@
         try {
           const result = await api('/api/auth', { phone, password, action: 'register' });
           verifyStatus.className = 'notice ok';
-          verifyStatus.innerHTML = '账号<strong>申请</strong>成功，请联系微信 1944505795 <button class="copy-btn" id="reg-copy-btn" type="button">复制</button> 进行<strong>审核</strong>通过。';
+          verifyStatus.innerHTML = '账号<strong>申请</strong>成功！\n请联系微信 1944505795 <button class="copy-btn" id="reg-copy-btn" type="button">复制</button> 进行<strong>审核</strong>通过。';
           const regCopyBtn = document.getElementById('reg-copy-btn');
           if (regCopyBtn) {
             regCopyBtn.addEventListener('click', function() {
@@ -1584,6 +1615,7 @@
 
     fieldGroups.phone.input.addEventListener('input', () => setFieldError(fieldGroups.phone, ''));
     fieldGroups.password.input.addEventListener('input', () => setFieldError(fieldGroups.password, ''));
+    fieldGroups.confirmPassword.input.addEventListener('input', () => setFieldError(fieldGroups.confirmPassword, ''));
     Object.values(fieldGroups).forEach((group) => {
       group.input.addEventListener('blur', () => {
         if (group === fieldGroups.phone) {
@@ -1592,6 +1624,10 @@
         }
         if (group === fieldGroups.password) {
           if (group.input.value.trim()) validatePassword();
+          return;
+        }
+        if (group === fieldGroups.confirmPassword) {
+          if (group.input.value.trim()) validateConfirmPassword();
           return;
         }
         if (group === fieldGroups.chargeAmount) {
@@ -1616,12 +1652,24 @@
       if (event.key === 'Enter') handleAuth();
     });
 
+    document.getElementById('confirm-password').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') handleAuth();
+    });
+
     /* ===== 密码显示/隐藏切换 ===== */
     const eyeShowSVG = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>';
     const eyeHideSVG = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/>';
     document.getElementById('toggle-pwd').addEventListener('click', function() {
       const pwdInput = document.getElementById('password');
       const eyeIcon = document.getElementById('eye-icon');
+      const isHidden = pwdInput.type === 'password';
+      pwdInput.type = isHidden ? 'text' : 'password';
+      eyeIcon.innerHTML = isHidden ? eyeHideSVG : eyeShowSVG;
+      this.title = isHidden ? '隐藏密码' : '显示密码';
+    });
+    document.getElementById('toggle-pwd2').addEventListener('click', function() {
+      const pwdInput = document.getElementById('confirm-password');
+      const eyeIcon = document.getElementById('eye-icon2');
       const isHidden = pwdInput.type === 'password';
       pwdInput.type = isHidden ? 'text' : 'password';
       eyeIcon.innerHTML = isHidden ? eyeHideSVG : eyeShowSVG;
@@ -1670,6 +1718,10 @@
     }
 
     /* ===== 登录/注册模式切换 ===== */
+    function toggleConfirmPasswordField(show) {
+      document.getElementById('confirm-password-field').classList.toggle('hidden', !show);
+    }
+
     document.querySelectorAll('.mode-tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
         authMode = tab.dataset.mode;
@@ -1678,6 +1730,7 @@
         });
         verifyBtn.textContent = authMode === 'login' ? '登录' : '注册';
         setStatus(verifyStatus, authMode === 'login' ? '请输入手机号和密码登录。' : '请输入手机号和密码注册。');
+        toggleConfirmPasswordField(authMode === 'register');
         clearFieldErrors();
       });
     });
@@ -1723,6 +1776,7 @@
       setStatus(powerStatus, '验证成功后可查询当前功率。');
       setStatus(orderStatus, '验证成功后可查询最近订单。');
       authMode = 'login';
+      toggleConfirmPasswordField(false);
       document.querySelectorAll('.mode-tab').forEach(function(t) {
         t.classList.toggle('active', t.dataset.mode === 'login');
       });
