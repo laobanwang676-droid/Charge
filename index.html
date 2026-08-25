@@ -1241,6 +1241,12 @@
 
     async function api(path, data) {
       const headers = { 'Content-Type': 'application/json' };
+      try {
+        const session = loadAuthSession();
+        if (session && session.token) {
+          headers.Authorization = `Bearer ${session.token}`;
+        }
+      } catch (_) { /* ignore */ }
       let response;
       try {
         response = await fetch(`${API_BASE}${path}`, {
@@ -1280,14 +1286,47 @@
       document.getElementById('logout-btn').classList.add('hidden');
     }
 
+    /* ===== 7天登录持久化 ===== */
+    const AUTH_STORAGE_KEY = 'charge-auth-session';
+    const AUTH_VALIDITY_MS = 7 * 24 * 60 * 60 * 1000;
+
+    function saveAuthSession(phone, token) {
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ phone: phone, token: token || '', loginTime: Date.now() }));
+      } catch (_) { /* ignore */ }
+    }
+
+    function loadAuthSession() {
+      try {
+        const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (!raw) return null;
+        const session = JSON.parse(raw);
+        if (!session.phone || !session.loginTime) return null;
+        if (Date.now() - session.loginTime > AUTH_VALIDITY_MS) {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          return null;
+        }
+        return session;
+      } catch (_) { return null; }
+    }
+
+    function clearAuthSession() {
+      try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) { /* ignore */ }
+    }
+
     /* ===== Token 有效性校验（每次刷新页面时调用） ===== */
     async function validateToken() {
       try {
+        const session = loadAuthSession();
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const headers = { 'Content-Type': 'application/json' };
+        if (session && session.token) {
+          headers.Authorization = `Bearer ${session.token}`;
+        }
         const response = await fetch(`${API_BASE}/api/auth`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           credentials: 'include',
           body: JSON.stringify({ action: 'verify' }),
           signal: controller.signal,
@@ -1322,6 +1361,7 @@
     function resetAll() {
       verifyCooldownUntil = 0;
       verifyInFlight = false;
+      clearAuthSession();
       authMode = 'login';
       document.querySelectorAll('.mode-tab').forEach(function(t) {
         t.classList.toggle('active', t.dataset.mode === 'login');
@@ -1449,6 +1489,7 @@
         setStatus(verifyStatus, '正在登录...');
         try {
           const result = await api('/api/auth', { phone, password, action: 'login' });
+          saveAuthSession(phone, result.token || '');
           setLoggedInUI(phone);
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
           beginVerifyCooldown(5);
@@ -1748,6 +1789,7 @@
       setStatus(verifyStatus, '正在校验登录状态...');
       const phone = await validateToken();
       if (!phone) {
+        clearAuthSession();
         return false;
       }
 
@@ -1777,6 +1819,7 @@
       } catch (_) {
         /* 即使后端请求失败，前端也继续登出 */
       }
+      clearAuthSession();
       document.querySelector('.verify-card').classList.remove('hidden');
       closeWorkbench();
       var loggedUser = document.getElementById('logged-user');
