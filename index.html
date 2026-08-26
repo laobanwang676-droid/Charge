@@ -1819,25 +1819,9 @@
       } catch (_) {
         /* 即使后端请求失败，前端也继续登出 */
       }
-      clearAuthSession();
-      document.querySelector('.verify-card').classList.remove('hidden');
-      closeWorkbench();
-      var loggedUser = document.getElementById('logged-user');
-      loggedUser.textContent = '';
-      loggedUser.classList.add('hidden');
-      setStatus(verifyStatus, '请输入手机号和密码登录。');
-      setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
-      setStatus(powerStatus, '验证成功后可查询当前功率。');
-      setStatus(orderStatus, '验证成功后可查询最近订单。');
-      authMode = 'login';
-      toggleConfirmPasswordField(false);
-      document.querySelectorAll('.mode-tab').forEach(function(t) {
-        t.classList.toggle('active', t.dataset.mode === 'login');
-      });
-      verifyBtn.textContent = '登录';
+      resetAll();
       logoutBtn.disabled = false;
       logoutBtn.textContent = '← 返回登录';
-      updateVerifyButtonState();
     });
 
     document.getElementById('copy-wx-btn').addEventListener('click', function() {
