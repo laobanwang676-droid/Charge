@@ -722,9 +722,13 @@
       padding: 24px;
       border-radius: 16px;
       border: 1px solid var(--line);
-      background: var(--panel);
+      background: #ffffff;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
       text-align: center;
+    }
+
+    body.theme-dark .pay-reminder-modal {
+      background: #0d1728;
     }
 
     .pay-reminder-modal h3 {
@@ -769,6 +773,76 @@
     }
 
     .pay-modal-close:hover {
+      opacity: 0.9;
+    }
+
+    /* 公告弹窗 */
+    .announcement-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .announcement-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .announcement-modal {
+      width: min(400px, calc(100% - 32px));
+      padding: 26px 24px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
+
+    body.theme-dark .announcement-modal {
+      background: #0d1728;
+    }
+
+    .announcement-modal h3 {
+      margin: 0 0 14px;
+      font-size: 17px;
+      color: var(--text);
+    }
+
+    .announcement-modal p {
+      margin: 6px 0;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    .announcement-modal strong {
+      color: #000000;
+      font-weight: 700;
+    }
+
+    body.theme-dark .announcement-modal strong {
+      color: #ffffff;
+    }
+
+    .announcement-close {
+      margin-top: 18px;
+      padding: 10px 32px;
+      border-radius: 10px;
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .announcement-close:hover {
       opacity: 0.9;
     }
 
@@ -1040,6 +1114,16 @@
     </div>
   </div>
 
+  <!-- 公告弹窗 -->
+  <div class="announcement-overlay" id="announcement-overlay">
+    <div class="announcement-modal">
+      <h3>提示</h3>
+      <p>9.7日前充电<strong>免代充费</strong>，只需要付<strong>本金</strong>即可。</p>
+      <p>之后 <strong>0.4元 / 次</strong>。</p>
+      <button class="announcement-close" id="announcement-close" type="button">我知道了</button>
+    </div>
+  </div>
+
   <script>
     const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
@@ -1266,6 +1350,7 @@
 
       if (response.status === 401) {
         resetAll();
+        showAnnouncement();
         throw new Error('登录已过期，请重新登录');
       }
 
@@ -1617,6 +1702,22 @@
       if (e.target === payOverlay) closePayReminder();
     });
 
+    /* ===== 公告弹窗（刷新 / token失效时提示） ===== */
+    const announcementOverlay = document.getElementById('announcement-overlay');
+
+    function showAnnouncement() {
+      announcementOverlay.classList.add('show');
+    }
+
+    function closeAnnouncement() {
+      announcementOverlay.classList.remove('show');
+    }
+
+    document.getElementById('announcement-close').addEventListener('click', closeAnnouncement);
+    announcementOverlay.addEventListener('click', function (e) {
+      if (e.target === announcementOverlay) closeAnnouncement();
+    });
+
     /* ===== 功能2：充电插座号记忆与复用 ===== */
     var CHARGE_MEMORY_KEY = 'charge-last-sid';
 
@@ -1803,6 +1904,7 @@
     checkServerHealth();
 
     (async function init() {
+      showAnnouncement();
       const loggedIn = await tryAutoLogin();
       if (!loggedIn) {
         resetAll();
