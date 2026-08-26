@@ -1604,7 +1604,7 @@
 
     function showPayReminder(station, sid, amount) {
       payModalSid.textContent = station + '-' + sid;
-      payModalAmount.textContent = (Number(amount) + 0.5).toFixed(1);
+      payModalAmount.textContent = Number(amount).toFixed(1);
       payOverlay.classList.add('show');
     }
 
