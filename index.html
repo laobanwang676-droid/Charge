@@ -1009,7 +1009,7 @@
         </div>
       </section>
 
-      <aside class="sidebar">
+      <aside class="sidebar hidden" id="sidebar-notes">
         <section class="sidebar-card">
           <div class="panel-title">
             <div>
@@ -1353,6 +1353,7 @@
       loggedUser.textContent = masked + ' 已登录';
       loggedUser.classList.remove('hidden');
       document.querySelector('.verify-card').classList.add('hidden');
+      document.getElementById('sidebar-notes').classList.remove('hidden');
       openWorkbench();
     }
 
@@ -1377,6 +1378,7 @@
       loggedUser.classList.add('hidden');
       closeWorkbench();
       document.querySelector('.verify-card').classList.remove('hidden');
+      document.getElementById('sidebar-notes').classList.add('hidden');
       setStatus(verifyStatus, '请输入手机号和密码登录。');
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
       setStatus(powerStatus, '验证成功后可查询当前功率。');
