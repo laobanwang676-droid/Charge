@@ -1616,6 +1616,9 @@
       const sid = fieldGroups.chargeSid.input.value.trim();
       const amount = fieldGroups.chargeAmount.input.value.trim();
 
+      /* 功能2：无论充电请求成功与否，都记住站点号和插座号 */
+      saveChargeMemory(station_num, sid);
+
       setStatus(chargeStatus, '正在提交充电请求...');
       chargeInFlight = true;
       updateChargeButtonState();
@@ -1625,8 +1628,6 @@
         beginChargeCooldown(5);
         /* 功能1：充电成功后弹窗提醒付款 */
         showPayReminder(station_num, sid, amount);
-        /* 功能2：记住站点号和插座号供查询页面复用 */
-        saveChargeMemory(station_num, sid);
       } catch (error) {
         if (error.message.includes('操作太快') || error.message.includes('请求过于频繁')) {
           const match = error.message.match(/(\d+)\s*秒/);
@@ -1653,6 +1654,9 @@
       const station_num = fieldGroups.powerStation.input.value.trim();
       const sid = fieldGroups.powerSid.input.value.trim();
 
+      /* 功能2：无论查询成功与否，都记住功率查询的站点号和插座号 */
+      savePowerMemory(station_num, sid);
+
       setStatus(powerStatus, '正在查询功率...');
       try {
         const result = await api('/api/power', { station_num, sid });
@@ -1671,6 +1675,9 @@
 
       const station_num = fieldGroups.orderStation.input.value.trim();
       const sid = fieldGroups.orderSid.input.value.trim();
+
+      /* 功能2：无论查询成功与否，都记住订单查询的站点号和插座号 */
+      saveOrderMemory(station_num, sid);
 
       setStatus(orderStatus, '正在查询订单...');
       try {
@@ -1718,44 +1725,65 @@
       if (e.target === announcementOverlay) closeAnnouncement();
     });
 
-    /* ===== 功能2：充电插座号记忆与复用 ===== */
+    /* ===== 功能2：站点号/插座号 三表独立记忆与复用 ===== */
     var CHARGE_MEMORY_KEY = 'charge-last-sid';
+    var POWER_MEMORY_KEY = 'power-last-sid';
+    var ORDER_MEMORY_KEY = 'order-last-sid';
 
-    function saveChargeMemory(station, sid) {
+    function saveMemory(key, station, sid) {
       try {
-        localStorage.setItem(CHARGE_MEMORY_KEY, JSON.stringify({ station: station, sid: sid }));
+        localStorage.setItem(key, JSON.stringify({ station: station, sid: sid }));
       } catch (_) { /* ignore */ }
     }
- 
-    function restoreChargeMemory() {
+
+    function restoreMemory(key) {
       try {
-        var raw = localStorage.getItem(CHARGE_MEMORY_KEY);
+        var raw = localStorage.getItem(key);
         if (!raw) return null;
         return JSON.parse(raw);
       } catch (_) { return null; }
     }
 
-    function fillQueryFromMemory() {
-      var mem = restoreChargeMemory();
+    function saveChargeMemory(station, sid) { saveMemory(CHARGE_MEMORY_KEY, station, sid); }
+    function savePowerMemory(station, sid) { saveMemory(POWER_MEMORY_KEY, station, sid); }
+    function saveOrderMemory(station, sid) { saveMemory(ORDER_MEMORY_KEY, station, sid); }
+
+    /* 回填：仅当表单为空时回填，避免覆盖用户正在输入的内容 */
+    function fillFromMemory(key, stationField, sidField) {
+      var mem = restoreMemory(key);
       if (!mem) return;
-      fieldGroups.powerStation.input.value = mem.station || '';
-      fieldGroups.powerSid.input.value = mem.sid || '';
-      fieldGroups.orderStation.input.value = mem.station || '';
-      fieldGroups.orderSid.input.value = mem.sid || '';
+      if (!stationField.value.trim() && !sidField.value.trim()) {
+        stationField.value = mem.station || '';
+        sidField.value = mem.sid || '';
+      }
+    }
+
+    function fillChargeFromMemory() {
+      fillFromMemory(CHARGE_MEMORY_KEY, fieldGroups.chargeStation.input, fieldGroups.chargeSid.input);
+    }
+
+    function fillPowerFromMemory() {
+      fillFromMemory(POWER_MEMORY_KEY, fieldGroups.powerStation.input, fieldGroups.powerSid.input);
+    }
+
+    function fillOrderFromMemory() {
+      fillFromMemory(ORDER_MEMORY_KEY, fieldGroups.orderStation.input, fieldGroups.orderSid.input);
     }
 
     document.querySelectorAll('.tab').forEach((tab) => {
       tab.addEventListener('click', function () {
         switchTab(tab.dataset.tab);
-        if (tab.dataset.tab === 'power' || tab.dataset.tab === 'order') {
-          fillQueryFromMemory();
-        }
+        if (tab.dataset.tab === 'charge') fillChargeFromMemory();
+        if (tab.dataset.tab === 'power') fillPowerFromMemory();
+        if (tab.dataset.tab === 'order') fillOrderFromMemory();
       });
     });
 
     verifyBtn.addEventListener('click', handleAuth);
     resetBtn.addEventListener('click', function () {
       try { localStorage.removeItem(CHARGE_MEMORY_KEY); } catch (_) { /* ignore */ }
+      try { localStorage.removeItem(POWER_MEMORY_KEY); } catch (_) { /* ignore */ }
+      try { localStorage.removeItem(ORDER_MEMORY_KEY); } catch (_) { /* ignore */ }
       resetAll();
     });
     themeToggle.addEventListener('click', toggleTheme);
@@ -1908,6 +1936,8 @@
       const loggedIn = await tryAutoLogin();
       if (!loggedIn) {
         resetAll();
+      } else {
+        fillChargeFromMemory();
       }
     })();
 
