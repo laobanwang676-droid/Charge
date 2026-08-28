@@ -1456,6 +1456,10 @@
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) { /* ignore */ }
     }
 
+    function clearLoginCredentials() {
+      try { localStorage.removeItem(LOGIN_CREDENTIALS_KEY); } catch (_) { /* ignore */ }
+    }
+
     function saveLoginCredentials(phone, password) {
       try {
         localStorage.setItem(LOGIN_CREDENTIALS_KEY, JSON.stringify({ phone: phone, password: password }));
@@ -2052,6 +2056,7 @@
         /* 即使后端请求失败，前端也继续登出 */
       }
       resetAll();
+      fillLoginCredentials();
       logoutBtn.disabled = false;
       logoutBtn.textContent = '← 返回登录';
     });
