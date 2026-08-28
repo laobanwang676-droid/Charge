@@ -1179,19 +1179,6 @@
     </div>
   </div>
 
-  <div class="panel" style="width: min(760px, calc(100% - 32px)); margin: 18px auto 0;">
-    <div class="panel-head">
-      <div class="panel-title">
-        <h2>临时测试区</h2>
-        <div class="sub">仅用于测试直接请求站点状态接口，方便删除</div>
-      </div>
-    </div>
-    <div class="panel-body" style="display: grid; gap: 12px;">
-      <button id="test-ck-btn" type="button" style="padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: inherit; cursor: pointer; width: fit-content;">测试查询站点空闲状态</button>
-      <div id="test-ck-result" style="min-height: 88px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 12px; background: rgba(148, 163, 184, 0.06); white-space: pre-wrap; line-height: 1.6;">点击按钮后显示结果</div>
-    </div>
-  </div>
-
   <script>
     const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
@@ -1211,17 +1198,6 @@
     const serverText = document.getElementById('server-text');
     const registerCheckOverlay = document.getElementById('register-check-overlay');
     const registerCheckCopy = document.getElementById('register-check-copy');
-    const testCkBtn = document.getElementById('test-ck-btn');
-    const testCkResult = document.getElementById('test-ck-result');
-
-    const TEST_CK_URL = 'https://wx.jwnzn.com/mini_jwnzn/miniapp/mp_parseCk.action';
-    const TEST_CK_BODY = 'ck=1e3d58cb5500&memberId=1473506';
-    const TEST_CK_HEADERS = {
-      'Host': 'wx.jwnzn.com',
-      'content-type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.68(0x18004434) NetType/4G Language/zh_CN',
-      'Referer': 'https://servicewechat.com/wxbca9e5fdb915c13d/133/page-frame.html',
-    };
 
     let themeMode = 'light';
     let verifyCooldownUntil = 0;
@@ -1255,61 +1231,6 @@
 
     function setButtonLocked(button, locked) {
       button.disabled = locked;
-    }
-
-    function formatFreeSidsFromParseCk(data) {
-      const products = Array.isArray(data && data.products) ? data.products : [];
-      const freeSids = products
-        .filter((item) => Number(item && item.state) === 0)
-        .map((item) => item && item.sid)
-        .filter((sid) => sid !== undefined && sid !== null)
-        .map((sid) => String(sid));
-      return freeSids.length ? freeSids.join('、') : '无空闲插座';
-    }
-
-    function formatParseCkStationName(data) {
-      const devInfo = data && data.devInfo ? data.devInfo : {};
-      return devInfo.devName || data.snName || data.deviceName || '未知站点';
-    }
-
-    async function testParseCkAction() {
-      testCkBtn.disabled = true;
-      testCkBtn.textContent = '请求中...';
-      testCkResult.textContent = '正在请求站点状态，请稍候...';
-
-      try {
-        const response = await fetch(TEST_CK_URL, {
-          method: 'POST',
-          mode: 'cors',
-          headers: TEST_CK_HEADERS,
-          body: TEST_CK_BODY,
-        });
-
-        const text = await response.text();
-        let data = null;
-        try {
-          data = JSON.parse(text);
-        } catch (_) {
-          throw new Error('返回不是合法 JSON：' + text.slice(0, 200));
-        }
-
-        const stationName = formatParseCkStationName(data);
-        const normal = Number(data && data.normal);
-        const msg = data && data.msg ? String(data.msg) : '';
-        const freeSids = formatFreeSidsFromParseCk(data);
-
-        if (normal === -10 || msg.includes('离线')) {
-          testCkResult.textContent = `${stationName}\n设备离线`;
-          return;
-        }
-
-        testCkResult.textContent = `${stationName}\n空闲插座：${freeSids}`;
-      } catch (error) {
-        testCkResult.textContent = `请求失败：${error.message}`;
-      } finally {
-        testCkBtn.disabled = false;
-        testCkBtn.textContent = '测试查询站点空闲状态';
-      }
     }
 
     function applyTheme(mode) {
@@ -1968,7 +1889,6 @@
       try { localStorage.removeItem(ORDER_MEMORY_KEY); } catch (_) { /* ignore */ }
       resetAll();
     });
-    testCkBtn.addEventListener('click', testParseCkAction);
     themeToggle.addEventListener('click', toggleTheme);
     chargeBtn.addEventListener('click', startCharge);
     powerBtn.addEventListener('click', queryPowerAction);
