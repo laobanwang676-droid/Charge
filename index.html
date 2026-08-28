@@ -1082,7 +1082,7 @@
                 <div class="actions" style="margin-top: 8px;">
                   <button class="btn-success" id="charge-btn">开始充电</button>
                 </div>
-                <div class="notice" id="charge-status" style="margin-top: 12px;">验证成功后可在这里发起充电请求。</div>
+                <div class="notice" id="charge-status" style="margin-top: 12px;">可在这里发起充电请求。</div>
               </section>
 
               <section class="tab-panel" id="tab-power">
@@ -1101,7 +1101,7 @@
                 <div class="actions" style="margin-top: 8px;">
                   <button class="btn-primary" id="power-btn">查询功率</button>
                 </div>
-                <div class="notice" id="power-status" style="margin-top: 12px;">验证成功后可查询指定插座当前功率。</div>
+                <div class="notice" id="power-status" style="margin-top: 12px;">可查询指定插座当前功率。</div>
                 <div class="helper">显示功率结果。</div>
               </section>
 
@@ -1121,8 +1121,8 @@
                 <div class="actions" style="margin-top: 8px;">
                   <button class="btn-primary" id="order-btn">查询订单</button>
                 </div>
-                <div class="notice" id="order-status" style="margin-top: 12px;">验证成功后可查询指定插座最近订单。</div>
-                <div class="helper">会显示最近48h内完成的订单信息。</div>
+                <div class="notice" id="order-status" style="margin-top: 12px;">可查询指定插座最近订单。</div>
+                <div class="helper">显示最近48h内完成的订单信息。</div>
               </section>
             </div>
           </div>
@@ -1522,9 +1522,9 @@
       document.querySelector('.verify-card').classList.remove('hidden');
       document.getElementById('sidebar-notes').classList.add('hidden');
       setStatus(verifyStatus, '未注册请先注册并联系管理员审核通过。');
-      setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
-      setStatus(powerStatus, '验证成功后可查询当前功率。');
-      setStatus(orderStatus, '验证成功后可查询最近订单。');
+      setStatus(chargeStatus, '可在这里发起充电请求。');
+      setStatus(powerStatus, '可查询当前功率。');
+      setStatus(orderStatus, '可查询最近订单。');
       updateVerifyButtonState();
       switchTab('charge');
     }
