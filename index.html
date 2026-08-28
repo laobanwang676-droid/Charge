@@ -1429,6 +1429,7 @@
 
     /* ===== 7天登录持久化 ===== */
     const AUTH_STORAGE_KEY = 'charge-auth-session';
+    const LOGIN_CREDENTIALS_KEY = 'charge-login-credentials';
     const AUTH_VALIDITY_MS = 7 * 24 * 60 * 60 * 1000;
 
     function saveAuthSession(phone, token) {
@@ -1453,6 +1454,31 @@
 
     function clearAuthSession() {
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) { /* ignore */ }
+    }
+
+    function saveLoginCredentials(phone, password) {
+      try {
+        localStorage.setItem(LOGIN_CREDENTIALS_KEY, JSON.stringify({ phone: phone, password: password }));
+      } catch (_) { /* ignore */ }
+    }
+
+    function loadLoginCredentials() {
+      try {
+        const raw = localStorage.getItem(LOGIN_CREDENTIALS_KEY);
+        if (!raw) return null;
+        const credentials = JSON.parse(raw);
+        if (!credentials.phone || !credentials.password) return null;
+        return credentials;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function fillLoginCredentials() {
+      const credentials = loadLoginCredentials();
+      if (!credentials) return;
+      fieldGroups.phone.input.value = credentials.phone || '';
+      fieldGroups.password.input.value = credentials.password || '';
     }
 
     /* ===== Token 有效性校验（每次刷新页面时调用） ===== */
@@ -1623,6 +1649,7 @@
         try {
           const result = await api('/api/auth', { phone, password, action: 'login' });
           saveAuthSession(phone, result.token || '');
+          saveLoginCredentials(phone, password);
           setLoggedInUI(phone);
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
           beginVerifyCooldown(5);
@@ -2008,6 +2035,7 @@
       const loggedIn = await tryAutoLogin();
       if (!loggedIn) {
         resetAll();
+        fillLoginCredentials();
       } else {
         fillChargeFromMemory();
       }
