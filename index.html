@@ -857,6 +857,35 @@
       opacity: 0.9;
     }
 
+    .announcement-copy {
+      margin-left: 10px;
+      padding: 8px 14px;
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      border-radius: 10px;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--accent);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, opacity .18s ease;
+    }
+
+    .announcement-copy:hover {
+      background: rgba(37, 99, 235, 0.18);
+      border-color: rgba(37, 99, 235, 0.4);
+      opacity: 1;
+    }
+
+    body.theme-dark .announcement-copy {
+      background: rgba(79, 140, 255, 0.15);
+      border-color: rgba(79, 140, 255, 0.3);
+      color: #ffffff;
+    }
+
+    body.theme-dark .announcement-copy:hover {
+      background: rgba(79, 140, 255, 0.25);
+      border-color: rgba(79, 140, 255, 0.45);
+    }
+
     .mode-tabs {
       display: inline-flex;
       gap: 6px;
@@ -1025,7 +1054,7 @@
               <button class="btn-primary" id="verify-btn">登录</button>
               <button class="btn-secondary" id="reset-btn" type="button">重置</button>
             </div>
-            <div class="notice" id="verify-status">请输入手机号和密码登录。</div>
+            <div class="notice" id="verify-status">未注册请先注册并联系管理员审核通过。</div>
           </div>
 
           <div class="workbench hidden" id="workbench">
@@ -1147,6 +1176,15 @@
     </div>
   </div>
 
+  <!-- 注册审核弹窗 -->
+  <div class="announcement-overlay" id="register-check-overlay">
+    <div class="announcement-modal">
+      <h3>注册申请已提交</h3>
+      <p>请添加微信 <strong id="register-check-wx">1944505795</strong><button class="announcement-copy" id="register-check-copy" type="button">复制</button> 审核通过。</p>
+      <button class="announcement-close" id="register-check-close" type="button">我知道了</button>
+    </div>
+  </div>
+
   <script>
     const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
@@ -1164,6 +1202,8 @@
     const verifyBadge = document.getElementById('verify-badge');
     const serverDot = document.getElementById('server-dot');
     const serverText = document.getElementById('server-text');
+    const registerCheckOverlay = document.getElementById('register-check-overlay');
+    const registerCheckCopy = document.getElementById('register-check-copy');
 
     let themeMode = 'light';
     let verifyCooldownUntil = 0;
@@ -1487,7 +1527,7 @@
       closeWorkbench();
       document.querySelector('.verify-card').classList.remove('hidden');
       document.getElementById('sidebar-notes').classList.add('hidden');
-      setStatus(verifyStatus, '请输入手机号和密码登录。');
+      setStatus(verifyStatus, '未注册请先注册并联系管理员审核通过。');
       setStatus(chargeStatus, '验证成功后可在这里发起充电请求。');
       setStatus(powerStatus, '验证成功后可查询当前功率。');
       setStatus(orderStatus, '验证成功后可查询最近订单。');
@@ -1568,17 +1608,8 @@
         setStatus(verifyStatus, '正在提交注册申请...');
         try {
           const result = await api('/api/auth', { phone, password, action: 'register' });
-          verifyStatus.className = 'notice ok';
-          verifyStatus.innerHTML = '账号<strong>申请</strong>成功！\n请联系微信 1944505795 <button class="copy-btn" id="reg-copy-btn" type="button">复制</button> 进行<strong>审核</strong>通过。';
-          const regCopyBtn = document.getElementById('reg-copy-btn');
-          if (regCopyBtn) {
-            regCopyBtn.addEventListener('click', function() {
-              navigator.clipboard.writeText('1944505795').then(function() {
-                regCopyBtn.textContent = '已复制';
-                setTimeout(function() { regCopyBtn.textContent = '复制'; }, 1500);
-              });
-            });
-          }
+          setStatus(verifyStatus, result.message || '账号申请成功，审核提示已弹窗显示。', 'ok');
+          showRegisterCheck();
           beginVerifyCooldown(5);
         } catch (error) {
           if (error.message.includes('操作太快') || error.message.includes('请求过于频繁')) {
@@ -1743,9 +1774,27 @@
       announcementOverlay.classList.remove('show');
     }
 
+    function showRegisterCheck() {
+      registerCheckOverlay.classList.add('show');
+    }
+
+    function closeRegisterCheck() {
+      registerCheckOverlay.classList.remove('show');
+    }
+
     document.getElementById('announcement-close').addEventListener('click', closeAnnouncement);
     announcementOverlay.addEventListener('click', function (e) {
       if (e.target === announcementOverlay) closeAnnouncement();
+    });
+    document.getElementById('register-check-close').addEventListener('click', closeRegisterCheck);
+    registerCheckOverlay.addEventListener('click', function (e) {
+      if (e.target === registerCheckOverlay) closeRegisterCheck();
+    });
+    registerCheckCopy.addEventListener('click', function() {
+      navigator.clipboard.writeText('1944505795').then(function() {
+        registerCheckCopy.textContent = '已复制';
+        setTimeout(function() { registerCheckCopy.textContent = '复制'; }, 1500);
+      });
     });
 
     /* ===== 功能2：站点号/插座号 三表独立记忆与复用 ===== */
@@ -1936,7 +1985,7 @@
           t.classList.toggle('active', t.dataset.mode === authMode);
         });
         verifyBtn.textContent = authMode === 'login' ? '登录' : '注册';
-        setStatus(verifyStatus, authMode === 'login' ? '请输入手机号和密码登录。' : '请输入手机号和密码注册。');
+        setStatus(verifyStatus, authMode === 'login' ? '未注册请先注册并联系管理员审核通过。' : '请输入手机号和密码注册。');
         toggleConfirmPasswordField(authMode === 'register');
         clearFieldErrors();
       });
