@@ -1968,6 +1968,7 @@
       try { localStorage.removeItem(ORDER_MEMORY_KEY); } catch (_) { /* ignore */ }
       resetAll();
     });
+    testCkBtn.addEventListener('click', testParseCkAction);
     themeToggle.addEventListener('click', toggleTheme);
     chargeBtn.addEventListener('click', startCharge);
     powerBtn.addEventListener('click', queryPowerAction);
