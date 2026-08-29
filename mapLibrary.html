@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>综合楼充电桩分布图</title>
+	<style>
+		:root {
+			--ink: #14110f;
+			--accent: #d92d20;
+			--line: #8f6a64;
+			--dash: #c8aca2;
+			--paper: #fffdfb;
+			--paper-2: #fff6f1;
+			--paper-3: #fff1ea;
+			--shadow: 0 14px 34px rgba(115, 72, 62, 0.10);
+			--stroke: rgba(143, 106, 100, 0.22);
+		}
+
+		* { box-sizing: border-box; }
+
+		html, body {
+			margin: 0;
+			min-height: 100%;
+			background: #f4f0ed;
+			color: var(--ink);
+			font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+		}
+
+		body {
+			display: flex;
+			justify-content: center;
+			padding: 18px 12px 28px;
+		}
+
+		.page {
+			width: min(100%, 1020px);
+			background: linear-gradient(180deg, #fff 0%, #fffdfc 100%);
+			border: 1px solid rgba(143, 106, 100, 0.12);
+			border-radius: 18px;
+			box-shadow: var(--shadow);
+			padding: 12px 12px 16px;
+		}
+
+		.top-reference,
+		.bottom-reference {
+			border: 1px solid var(--stroke);
+			border-radius: 16px;
+			background: #fff;
+			box-shadow: 0 8px 18px rgba(115, 72, 62, 0.06);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-weight: 900;
+			letter-spacing: 0;
+		}
+
+		.top-reference {
+			height: 42px;
+			margin: 0 auto 10px;
+			width: min(100%, 260px);
+			font-size: clamp(15px, 2vw, 18px);
+		}
+
+		.title {
+			margin: 0 0 14px;
+			text-align: center;
+			font-size: clamp(28px, 4.2vw, 46px);
+			font-weight: 900;
+			line-height: 1.1;
+			letter-spacing: 0;
+		}
+
+		.map {
+			position: relative;
+			width: 100%;
+			max-width: 920px;
+			margin: 0 auto;
+			aspect-ratio: 840 / 1030;
+			min-height: 860px;
+			background: linear-gradient(180deg, #fff 0%, #fffdfb 100%);
+		}
+
+		.library {
+			position: absolute;
+			left: 13.5%;
+			top: 1.2%;
+			width: 26.2%;
+			height: 6.2%;
+			border-radius: 18px;
+			background: linear-gradient(180deg, #fff 0%, var(--paper-2) 100%);
+			border: 1px solid var(--stroke);
+			box-shadow: 0 8px 18px rgba(115, 72, 62, 0.06);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: clamp(16px, 2.4vw, 22px);
+			font-weight: 900;
+		}
+
+		.bottom-reference {
+			position: absolute;
+			left: 9.6%;
+			bottom: 1.2%;
+			width: 34.2%;
+			height: 6.9%;
+			justify-content: flex-start;
+			padding-left: 20px;
+			font-size: clamp(18px, 2.4vw, 24px);
+		}
+
+		.grid {
+			position: absolute;
+			left: 9.6%;
+			right: 9.6%;
+			top: 10.4%;
+			bottom: 11.2%;
+		}
+
+		.aisle {
+			position: absolute;
+			left: 43.4%;
+			top: 0;
+			bottom: 0;
+			width: 13.2%;
+			border-radius: 18px;
+			border: 1.6px dashed var(--dash);
+			background: linear-gradient(180deg, rgba(255, 245, 241, 0.54) 0%, rgba(255, 255, 255, 0.86) 100%);
+			box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.36);
+		}
+
+		.aisle-label {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			font-size: clamp(24px, 3vw, 34px);
+			font-weight: 900;
+			color: var(--line);
+			writing-mode: vertical-rl;
+			text-orientation: upright;
+			letter-spacing: 0;
+		}
+
+		.row {
+			position: absolute;
+			left: 0;
+			right: 0;
+			height: 7.4%;
+		}
+
+		.row.top { top: 3.0%; }
+		.row.mid { top: 28.9%; }
+		.row.low { top: 55.1%; }
+
+		.left-group,
+		.right-group {
+			position: absolute;
+			top: 0;
+			height: 100%;
+			display: flex;
+			align-items: stretch;
+			gap: 10px;
+		}
+
+		.left-group {
+			left: 0;
+			width: 40%;
+		}
+
+		.right-group {
+			right: 0;
+			width: 40%;
+		}
+
+		.left-group.two { justify-content: flex-start; }
+		.left-group.one { width: 20%; }
+		.right-group.five,
+		.right-group.four { justify-content: flex-end; }
+
+		.site {
+			flex: 0 0 72px;
+			min-width: 0;
+			height: 100%;
+			border: 1px solid rgba(143, 106, 100, 0.24);
+			border-radius: 12px;
+			background: linear-gradient(180deg, #fff 0%, var(--paper-3) 100%);
+			box-shadow: 0 8px 18px rgba(115, 72, 62, 0.08);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0 8px;
+			text-align: center;
+			font-size: clamp(10px, 1.18vw, 13px);
+			line-height: 1.08;
+			font-weight: 700;
+		}
+
+		.left-group.two .site,
+		.left-group.one .site {
+			flex-basis: 72px;
+		}
+
+		.right-group.five .site {
+			flex-basis: 72px;
+		}
+
+		.right-group.four .site {
+			flex-basis: 72px;
+		}
+
+		.site.empty {
+			background: linear-gradient(180deg, #fff 0%, #fff8f6 100%);
+			border-style: dashed;
+		}
+
+		.entry {
+			position: absolute;
+			left: 50%;
+			bottom: 17.0%;
+			transform: translateX(-50%);
+			padding: 6px 16px;
+			border-radius: 999px;
+			border: 1px solid rgba(143, 106, 100, 0.18);
+			background: #fff;
+			box-shadow: 0 6px 16px rgba(115, 72, 62, 0.08);
+			font-size: clamp(16px, 2.2vw, 22px);
+			font-weight: 900;
+		}
+
+		@media (max-width: 780px) {
+			body { padding: 0; background: #fff; }
+			.page {
+				width: 100%;
+				min-height: 100vh;
+				border-radius: 0;
+				box-shadow: none;
+				padding: 10px 8px 14px;
+			}
+			.top-reference {
+				height: 38px;
+				margin-bottom: 8px;
+				width: min(100%, 220px);
+			}
+			.title {
+				font-size: clamp(24px, 7vw, 34px);
+				margin-bottom: 10px;
+			}
+			.map {
+				aspect-ratio: auto;
+				min-height: 1180px;
+			}
+			.grid {
+				left: 5.4%;
+				right: 5.4%;
+				top: 9.8%;
+				bottom: 13.5%;
+			}
+			.library {
+				left: 7%;
+				width: 34%;
+				height: 5.6%;
+				font-size: clamp(14px, 4vw, 18px);
+			}
+			.bottom-reference {
+				left: 7%;
+				width: 54%;
+				height: 6.6%;
+				padding-left: 16px;
+				font-size: clamp(16px, 4.4vw, 20px);
+			}
+			.aisle {
+				left: 41.8%;
+				width: 16.4%;
+			}
+			.aisle-label {
+				font-size: clamp(18px, 5vw, 24px);
+			}
+			.row { height: 6.4%; }
+			.row.top { top: 2.8%; }
+			.row.mid { top: 29.0%; }
+			.row.low { top: 55.2%; }
+			.left-group { width: 39.5%; gap: 6px; }
+			.left-group.one { width: 20.5%; }
+			.right-group { width: 41%; gap: 6px; }
+			.site {
+				flex-basis: 64px;
+				border-radius: 10px;
+				font-size: 8px;
+				padding: 0 5px;
+			}
+			.entry {
+				bottom: 18.0%;
+				font-size: clamp(14px, 4vw, 18px);
+			}
+		}
+
+		/* Rebuilt flow layout */
+		.page {
+			width: min(100%, 960px);
+			padding: 12px 16px 18px;
+		}
+
+		.library {
+			position: static;
+			width: min(100%, 220px);
+			height: 38px;
+			margin: 0 auto 10px;
+			border-radius: 14px;
+			font-size: 17px;
+		}
+
+		.title {
+			margin-bottom: 18px;
+		}
+
+		.parking-area {
+			position: relative;
+			width: min(100%, 860px);
+			margin: 0 auto;
+			padding: 24px 0 0;
+		}
+
+		.aisle {
+			z-index: 0;
+			left: 44.2%;
+			top: 0;
+			bottom: 0;
+			width: 10.8%;
+			border-top: 0;
+			border-right: 2px dashed var(--dash);
+			border-bottom: 0;
+			border-left: 2px dashed var(--dash);
+			border-radius: 18px;
+		}
+
+		.rows {
+			position: relative;
+			z-index: 1;
+			display: flex;
+			flex-direction: column;
+			gap: clamp(72px, 10vw, 108px);
+		}
+
+		.row {
+			position: relative;
+			left: auto;
+			right: auto;
+			height: auto;
+			min-height: 74px;
+			display: grid;
+			grid-template-columns: minmax(320px, 1fr) 112px minmax(320px, 1fr);
+			align-items: center;
+		}
+
+		.left-group,
+		.right-group {
+			position: static;
+			width: auto;
+			height: 100%;
+			display: flex;
+			align-items: stretch;
+			gap: 10px;
+		}
+
+		.left-group {
+			justify-content: flex-end;
+			padding-right: 16px;
+		}
+
+		.right-group {
+			justify-content: flex-start;
+			padding-left: 16px;
+		}
+
+		.left-group.one,
+		.left-group.two,
+		.right-group.five,
+		.right-group.four {
+			width: auto;
+		}
+
+		.left-group.two .site,
+		.left-group.one .site,
+		.right-group.five .site,
+		.right-group.four .site {
+			flex-basis: 76px;
+		}
+
+		.site {
+			flex: 0 0 76px;
+			height: 74px;
+			padding: 0 6px;
+			font-size: 12px;
+			line-height: 1.15;
+		}
+
+		.entry {
+			position: relative;
+			left: auto;
+			bottom: auto;
+			z-index: 2;
+			width: fit-content;
+			margin: 34px auto 0;
+			transform: none;
+			font-size: 20px;
+		}
+
+		.bottom-reference {
+			position: relative;
+			left: auto;
+			bottom: auto;
+			width: min(100%, 760px);
+			height: 72px;
+			margin: 34px auto 0;
+			padding-left: 24px;
+			justify-content: flex-start;
+			font-size: clamp(20px, 3vw, 28px);
+		}
+
+		.bottom-reference::before {
+			content: "12号教学楼门口";
+			position: absolute;
+			transform: translateY(-43px);
+			left: 50%;
+			margin-left: -26px;
+			padding: 0 10px;
+			background: #fffdfc;
+			color: var(--line);
+			font-size: 15px;
+			font-weight: 800;
+		}
+
+		@media (max-width: 780px) {
+			.page {
+				padding: 10px 8px 16px;
+			}
+
+			.title {
+				margin-bottom: 14px;
+			}
+
+			.parking-area {
+				padding-top: 18px;
+			}
+
+			.aisle {
+				left: 42.5%;
+				width: 14.2%;
+			}
+
+			.rows {
+				gap: 72px;
+			}
+
+			.row {
+				grid-template-columns: minmax(140px, 1fr) 96px minmax(140px, 1fr);
+				min-height: 62px;
+			}
+
+			.left-group {
+				padding-right: 10px;
+				gap: 6px;
+			}
+
+			.right-group {
+				padding-left: 10px;
+				gap: 6px;
+			}
+
+			.site {
+				flex-basis: 58px;
+				height: 62px;
+				border-radius: 10px;
+				font-size: 8px;
+			}
+
+			.entry {
+				margin-top: 28px;
+				font-size: 17px;
+			}
+
+			.bottom-reference {
+				height: 62px;
+				margin-top: 28px;
+				padding-left: 16px;
+			}
+
+			.bottom-reference::before {
+				transform: translateY(-37px);
+				left: 50%;
+				margin-left: -22px;
+				font-size: 13px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<div class="library">图书馆</div>
+		<h1 class="title">综合楼充电桩分布图</h1>
+
+		<section class="parking-area" aria-label="综合楼充电桩分布图">
+			<div class="aisle" aria-hidden="true"><div class="aisle-label">过道</div></div>
+			<div class="rows">
+				<div class="row">
+					<div class="left-group">
+						<div class="site">10 号充电桩</div>
+						<div class="site">9 号充电桩</div>
+					</div>
+					<div></div>
+					<div class="right-group">
+						<div class="site">23 号充电桩</div><div class="site">24 号充电桩</div><div class="site">25 号充电桩</div><div class="site">26 号充电桩</div><div class="site">29 号充电桩</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="left-group"><div class="site">11 号充电桩</div></div>
+					<div></div>
+					<div class="right-group">
+						<div class="site">30 号充电桩</div><div class="site">32 号充电桩</div><div class="site">34 号充电桩</div><div class="site">35 号充电桩</div><div class="site">3 号充电桩</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="left-group"><div class="site">14 号充电桩</div></div>
+					<div></div>
+					<div class="right-group">
+						<div class="site">16 号充电桩</div><div class="site">17 号充电桩</div><div class="site">18 号充电桩</div><div class="site">19 号充电桩</div>
+					</div>
+				</div>
+			</div>
+			<div class="entry">入口</div>
+		</section>
+
+		<div class="bottom-reference">12号教学楼</div>
+	</main>
+</body>
+</html>
