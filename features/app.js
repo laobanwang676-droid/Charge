@@ -233,6 +233,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return areaData.siteMap[siteNumber] || areaData.siteMap[String(siteNumber)] || {};
     }
 
+    function getIdleSiteKey(building, siteNumber) {
+      return `${building}:${siteNumber}`;
+    }
+
     function getIdleSiteState(building, siteNumber) {
       const sitePayload = getIdleSitePayload(building, siteNumber);
       if (typeof sitePayload.state === 'string' && sitePayload.state) return sitePayload.state;
@@ -279,6 +283,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       cards.forEach((card) => {
         const siteNumber = Number(card.getAttribute('data-idle-site'));
         if (!Number.isFinite(siteNumber)) return;
+        const siteKey = getIdleSiteKey(building, siteNumber);
 
         const state = getIdleSiteState(building, siteNumber);
         card.classList.toggle('offline', state === '离线');
@@ -961,7 +966,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       }
 
       idleResultList.innerHTML = siteNumbers.map((siteNumber) => {
-        const isExpanded = idleExpandedSites.has(String(siteNumber));
+        const siteKey = getIdleSiteKey(building, siteNumber);
+        const isExpanded = idleExpandedSites.has(siteKey);
         const state = getIdleSiteState(building, siteNumber);
         const availableCount = getIdleSiteCount(building, siteNumber);
         const cardClass = state === '离线' ? 'offline' : (state === '充电中' ? 'charging' : 'idle');
@@ -1012,10 +1018,11 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       if (summary) summary.setAttribute('aria-expanded', String(isOpen));
       const siteNumber = card.getAttribute('data-idle-site');
       if (!siteNumber) return;
+      const siteKey = getIdleSiteKey(idleSelectedBuilding, siteNumber);
       if (isOpen) {
-        idleExpandedSites.add(String(siteNumber));
+        idleExpandedSites.add(siteKey);
       } else {
-        idleExpandedSites.delete(String(siteNumber));
+        idleExpandedSites.delete(siteKey);
       }
     }
 
