@@ -640,23 +640,23 @@
       }
 
       .idle-socket-grid {
-        grid-template-columns: repeat(4, minmax(74px, 1fr));
-        gap: 8px;
-        padding: 0 10px 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+        padding: 0 8px 12px;
       }
 
       .idle-socket-btn {
-        min-height: 66px;
-        padding: 10px 6px;
+        min-height: 60px;
+        padding: 8px 4px;
         font-size: 12px;
       }
 
       .idle-socket-number {
-        font-size: 15px;
+        font-size: 14px;
       }
 
       .idle-socket-state {
-        font-size: 12px;
+        font-size: 11px;
       }
     }
 
