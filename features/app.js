@@ -880,7 +880,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       beginIdleQueryCooldown(15);
 
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+      const timeoutId = window.setTimeout(() => controller.abort(), 15000);
       const headers = { 'Content-Type': 'application/json' };
       try {
         const session = loadAuthSession();
