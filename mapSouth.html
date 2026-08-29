@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>学术交流中心（南门）充电桩分布</title>
+	<style>
+		:root {
+			--ink: #111111;
+			--line: #8f6a64;
+			--dash: #c6a99f;
+			--accent: #d92d20;
+			--bg: #ffffff;
+			--muted: rgba(217, 45, 32, 0.12);
+			--panel: #fffaf8;
+			--panel-strong: #fff2ec;
+			--shadow: 0 12px 30px rgba(115, 72, 62, 0.10);
+		}
+
+		* { box-sizing: border-box; }
+
+		html, body {
+			margin: 0;
+			min-height: 100%;
+			background: #f2f2f2;
+			color: var(--ink);
+			font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+		}
+
+		body {
+			display: flex;
+			justify-content: center;
+			padding: 20px 12px 32px;
+		}
+
+		.page {
+			width: min(100%, 980px);
+			background: linear-gradient(180deg, #fff 0%, #fffdfc 100%);
+			padding: 10px 12px 18px;
+			position: relative;
+			overflow: hidden;
+			box-shadow: var(--shadow);
+			border: 1px solid rgba(143, 106, 100, 0.12);
+			border-radius: 18px;
+		}
+
+		.title {
+			text-align: center;
+			margin: 0;
+			font-size: clamp(20px, 5.5vw, 46px);
+			line-height: 1.15;
+			font-weight: 900;
+			letter-spacing: 0;
+			color: var(--ink);
+			padding: 0 4px;
+			overflow-wrap: break-word;
+		}
+
+		/* ========== 充电桩区域 ========== */
+		.charging-area {
+			position: relative;
+			width: 100%;
+			max-width: 780px;
+			margin: 40px auto 0;
+			padding-left: 110px;
+		}
+
+		/* 校南门标记 */
+		.south-gate {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 96px;
+			/* 通过 JS 设置高度，覆盖两行 + 间距 */
+			border: 1px solid rgba(143, 106, 100, 0.24);
+			border-radius: 18px;
+			background: linear-gradient(180deg, var(--panel) 0%, #fff 100%);
+			box-shadow: var(--shadow);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+		}
+
+		.south-gate span {
+			font-weight: 900;
+			font-size: clamp(16px, 2.4vw, 24px);
+			writing-mode: vertical-rl;
+			text-orientation: upright;
+			letter-spacing: 4px;
+			max-height: 100%;
+		}
+
+		/* 行容器 */
+		.station-row {
+			display: flex;
+			gap: 14px;
+			justify-content: flex-start;
+		}
+
+		.station-row + .station-row {
+			margin-top: 30px;
+		}
+
+		/* 充电桩卡片 */
+		.site {
+			flex: 1;
+			min-width: 0;
+			height: 64px;
+			border: 1px solid rgba(143, 106, 100, 0.26);
+			background: linear-gradient(180deg, #fff 0%, var(--panel-strong) 100%);
+			border-radius: 12px;
+			box-shadow: 0 8px 18px rgba(115, 72, 62, 0.08);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: clamp(11px, 2.8vw, 14px);
+			line-height: 1;
+			white-space: nowrap;
+			font-weight: 600;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			padding: 0 2px;
+		}
+
+		.site.empty {
+			background: linear-gradient(180deg, #fff 0%, #fff9f7 100%);
+			border-style: dashed;
+			box-shadow: none;
+		}
+
+		/* 校内标注 - 黑体 */
+		.campus-label {
+			text-align: center;
+			margin-top: 36px;
+			font-weight: 900;
+			font-family: "SimHei", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+			font-size: clamp(22px, 5vw, 40px);
+			color: var(--ink);
+			letter-spacing: 2px;
+		}
+
+		/* ========== 响应式 - 手机端优先 ========== */
+		@media (max-width: 480px) {
+			body { padding: 0; background: #fff; }
+			.page {
+				width: 100%;
+				min-height: 100vh;
+				padding: 6px 6px 14px;
+				box-shadow: none;
+				border-radius: 0;
+			}
+			.title {
+				font-size: 17px;
+				line-height: 1.3;
+			}
+			.charging-area {
+				padding-left: 60px;
+				margin-top: 18px;
+			}
+			.south-gate {
+				width: 50px;
+				border-radius: 12px;
+			}
+			.south-gate span {
+				font-size: 13px;
+				letter-spacing: 2px;
+			}
+			.station-row {
+				gap: 5px;
+			}
+			.station-row + .station-row {
+				margin-top: 14px;
+			}
+			.site {
+				height: 44px;
+				font-size: 10px;
+				border-radius: 8px;
+				padding: 0 1px;
+			}
+			.site.empty {
+				display: none;
+			}
+			.station-row#row2 {
+				padding-left: 0;
+				margin-left: calc((100% / 6) + 5px / 6);
+			}
+			.station-row#row2 .site {
+				flex: 1;
+			}
+			.campus-label {
+				font-size: 20px;
+				margin-top: 22px;
+			}
+		}
+
+		@media (min-width: 481px) and (max-width: 760px) {
+			body { padding: 0; background: #fff; }
+			.page {
+				width: 100%;
+				min-height: 100vh;
+				padding: 6px 8px 14px;
+				box-shadow: none;
+				border-radius: 0;
+			}
+			.charging-area {
+				padding-left: 72px;
+				margin-top: 24px;
+			}
+			.south-gate {
+				width: 60px;
+			}
+			.south-gate span {
+				font-size: 15px;
+				letter-spacing: 3px;
+			}
+			.station-row {
+				gap: 8px;
+			}
+			.station-row + .station-row {
+				margin-top: 20px;
+			}
+			.site {
+				height: 50px;
+				font-size: 11px;
+				border-radius: 10px;
+			}
+			.campus-label {
+				font-size: 24px;
+				margin-top: 28px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<h1 class="title">学术交流中心（南门）充电桩分布</h1>
+
+		<section class="charging-area" aria-label="南门充电桩分布图">
+			<!-- 校南门标记 -->
+			<div class="south-gate" id="southGate"><span>校南门</span></div>
+
+			<!-- 第一行：74 ~ 79 -->
+			<div class="station-row" id="row1">
+			<div class="site">74号充电桩</div>
+			<div class="site">75号充电桩</div>
+			<div class="site">76号充电桩</div>
+			<div class="site">77号充电桩</div>
+			<div class="site">78号充电桩</div>
+			<div class="site">79号充电桩</div>
+			</div>
+
+			<!-- 第二行：36 ~ 39，向右偏移一个卡片宽度 -->
+			<div class="station-row" id="row2">
+				<div class="site empty"></div>
+			<div class="site">36号充电桩</div>
+			<div class="site">37号充电桩</div>
+			<div class="site">38号充电桩</div>
+			<div class="site">39号充电桩</div>
+				<div class="site empty"></div>
+			</div>
+		</section>
+
+		<div class="campus-label">校内</div>
+	</main>
+
+	<script>
+		// 让小南门标记的高度精确覆盖两行充电桩
+		(function () {
+			function adjustGate() {
+				var row1 = document.getElementById('row1');
+				var row2 = document.getElementById('row2');
+				var gate = document.getElementById('southGate');
+				if (!row1 || !row2 || !gate) return;
+
+				var top = row1.offsetTop;
+				var bottom = row2.offsetTop + row2.offsetHeight;
+				gate.style.top = top + 'px';
+				gate.style.height = (bottom - top) + 'px';
+			}
+
+			adjustGate();
+			window.addEventListener('resize', adjustGate);
+		})();
+	</script>
+</body>
+</html>
