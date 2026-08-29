@@ -474,7 +474,7 @@
       gap: 10px;
       justify-items: center;
       margin: 0 auto;
-      max-width: 520px;
+      max-width: 560px;
     }
 
     .idle-query-notice {
@@ -537,9 +537,9 @@
     /* 空闲插座：单个站点展开后的插座按钮区域 */
     .idle-socket-grid {
       display: none;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 10px;
-      padding: 0 16px 16px;
+      grid-template-columns: repeat(5, minmax(76px, 1fr));
+      gap: 9px;
+      padding: 0 18px 16px;
     }
 
     .idle-site-card.open .idle-socket-grid {
@@ -561,12 +561,12 @@
     }
 
     .idle-socket-btn {
-      min-height: 58px;
-      padding: 8px 6px;
-      border-radius: 10px;
+      min-height: 60px;
+      padding: 9px 7px;
+      border-radius: 11px;
       display: grid;
       place-items: center;
-      gap: 4px;
+      gap: 5px;
       background: rgba(22, 163, 74, 0.1);
       border: 1px solid rgba(22, 163, 74, 0.22);
       color: var(--success);
@@ -611,7 +611,7 @@
     }
 
     .idle-socket-number {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       line-height: 1.1;
     }
@@ -640,23 +640,23 @@
       }
 
       .idle-socket-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(74px, 1fr));
         gap: 8px;
-        padding: 0 12px 12px;
+        padding: 0 10px 12px;
       }
 
       .idle-socket-btn {
-        min-height: 62px;
-        padding: 9px 4px;
+        min-height: 66px;
+        padding: 10px 6px;
         font-size: 12px;
       }
 
       .idle-socket-number {
-        font-size: 14px;
+        font-size: 15px;
       }
 
       .idle-socket-state {
-        font-size: 11px;
+        font-size: 12px;
       }
     }
 
