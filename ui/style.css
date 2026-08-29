@@ -505,7 +505,7 @@
       width: 100%;
       display: grid;
       gap: 6px;
-      padding: 14px 16px;
+      padding: 11px 14px;
       border-radius: 0;
       background: transparent;
       color: var(--text);
@@ -519,13 +519,13 @@
     }
 
     .idle-site-name {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
     }
 
     .idle-site-count {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
     }
 
@@ -537,9 +537,9 @@
     /* 空闲插座：单个站点展开后的插座按钮区域 */
     .idle-socket-grid {
       display: none;
-      grid-template-columns: repeat(5, minmax(76px, 1fr));
-      gap: 9px;
-      padding: 0 18px 16px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      padding: 0 16px 14px;
     }
 
     .idle-site-card.open .idle-socket-grid {
@@ -561,16 +561,16 @@
     }
 
     .idle-socket-btn {
-      min-height: 60px;
-      padding: 9px 7px;
-      border-radius: 11px;
+      min-height: 48px;
+      padding: 6px 4px;
+      border-radius: 9px;
       display: grid;
       place-items: center;
-      gap: 5px;
+      gap: 2px;
       background: rgba(22, 163, 74, 0.1);
       border: 1px solid rgba(22, 163, 74, 0.22);
       color: var(--success);
-      font-size: 13px;
+      font-size: 12px;
       box-shadow: none;
     }
 
@@ -611,13 +611,13 @@
     }
 
     .idle-socket-number {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
       line-height: 1.1;
     }
 
     .idle-socket-state {
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1.1;
       opacity: 0.95;
     }
@@ -628,7 +628,7 @@
       }
 
       .idle-site-summary {
-        padding: 15px 14px;
+        padding: 11px 14px;
       }
 
       .idle-site-name {
@@ -642,12 +642,12 @@
       .idle-socket-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 6px;
-        padding: 0 8px 12px;
+        padding: 0 10px 12px;
       }
 
       .idle-socket-btn {
-        min-height: 60px;
-        padding: 8px 4px;
+        min-height: 48px;
+        padding: 6px 4px;
         font-size: 12px;
       }
 

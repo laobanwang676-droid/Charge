@@ -50,21 +50,21 @@
             font-weight: bold;
             writing-mode: vertical-lr;
         }
-        /* 充电区域：几字型过道，左、上、右三边虚线，中间实体放充电桩 */
+        /* 充电区域：几字型U型过道，左、上、右三边虚线 */
         .charge-zone {
             flex: 1;
             position: relative;
             margin: 0 10px;
-            /* 几字形过道虚线：左、上、右三条边 */
             border-left: 2px dashed #8b4513;
             border-top: 2px dashed #8b4513;
             border-right: 2px dashed #8b4513;
-            padding: 12px;
+            /* 外侧过道加宽 */
+            padding: 12px 22px;
         }
-        /* 双列充电桩容器，中间无过道 */
+        /* 双列充电桩，缩小中间间距，两列靠近 */
         .pile-wrap {
             display: flex;
-            gap: 40px;
+            gap: 16px;
             width: 100%;
             height: 100%;
         }
@@ -105,7 +105,7 @@
         /* 过道文字标注 */
         .text-aisle-left {
             position: absolute;
-            left: 4px;
+            left: 6px;
             top: 45%;
             transform: translateY(-50%);
             font-size:18px;
@@ -119,7 +119,7 @@
         }
         .text-aisle-right {
             position: absolute;
-            right:4px;
+            right:6px;
             top:50%;
             transform: translateY(-50%);
             font-size:18px;
@@ -160,12 +160,10 @@
             <div class="road-left">马路</div>
 
             <div class="charge-zone">
-                <!-- 几字形过道文字：左、顶、右 -->
                 <div class="text-aisle-left">过道</div>
                 <div class="text-aisle-top">过道</div>
                 <div class="text-aisle-right">过道</div>
 
-                <!-- 双列充电桩，中间没有过道 -->
                 <div class="pile-wrap">
                     <div class="charge-col">
                         <div class="pile-box">东盟28号充电桩</div>
