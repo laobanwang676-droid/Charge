@@ -59,8 +59,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
     function normalizeIdleSocketDisplayState(rawState) {
       const state = normalizeIdleSocketState(rawState);
+      if (!state) return '无状态';
+      if (state === '无状态' || state.toLowerCase() === 'unknown' || state.toLowerCase() === 'none') return '无状态';
       if (state === '1' || state === 1 || state === '充电中') return '充电中';
-      if (state === '0' || state === 0 || state === '空闲' || state === '无状态') return '空闲';
+      if (state === '0' || state === 0 || state === '空闲') return '空闲';
       return '故障';
     }
 
@@ -118,14 +120,12 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function buildIdleSocketsFromStationSummary(station) {
-      const freeSidList = Array.isArray(station?.free_sids) ? station.free_sids : [];
-      const freeSidSet = new Set(freeSidList.map((sid) => Number(sid)).filter((sid) => Number.isFinite(sid)));
       const freeCount = Number(station?.free_count ?? station?.freeCount);
       const busyCount = Number(station?.busy_count ?? station?.busyCount);
       const faultCount = Number(station?.fault_count ?? station?.faultCount);
       const totalCount = Number.isFinite(freeCount) && Number.isFinite(busyCount) && Number.isFinite(faultCount) && (freeCount + busyCount + faultCount > 0)
         ? freeCount + busyCount + faultCount
-        : (freeSidSet.size > 0 ? freeSidSet.size + (Number.isFinite(busyCount) ? busyCount : 0) + (Number.isFinite(faultCount) ? faultCount : 0) : 0);
+        : 0;
 
       if (!Number.isFinite(totalCount) || totalCount <= 0) return [];
 
@@ -133,7 +133,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         const socketNumber = index + 1;
         return {
           socketNumber,
-          state: freeSidSet.has(socketNumber) ? '空闲' : '充电中',
+          state: '无状态',
           remainingSeconds: null,
         };
       });
@@ -167,11 +167,12 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
           const offline = Boolean(station?.offline);
           const busyCount = Number(station?.busy_count ?? station?.busyCount);
-          const hasChargingSocket = sockets.some((socket) => socket.state === '充电中');
+          const hasChargingSocket = productList.length > 0 && sockets.some((socket) => socket.state === '充电中');
+          const hasExplicitIdleSocket = productList.length > 0 && sockets.some((socket) => socket.state === '空闲');
 
           return {
             siteNumber: stationNumber,
-            state: offline ? '离线' : ((Number.isFinite(busyCount) && busyCount > 0) || hasChargingSocket ? '充电中' : '空闲'),
+            state: offline ? '离线' : (hasChargingSocket ? '充电中' : (hasExplicitIdleSocket ? '空闲' : '无状态')),
             availableCount,
             sockets,
           };
@@ -244,14 +245,18 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         if (sitePayload.sockets.some((socket) => socket.state === '离线')) return '离线';
         if (sitePayload.sockets.some((socket) => socket.state === '故障')) return '故障';
         if (sitePayload.sockets.some((socket) => socket.state === '充电中')) return '充电中';
+        if (sitePayload.sockets.every((socket) => socket.state === '无状态')) return '无状态';
       }
-      return '空闲';
+      return '无状态';
     }
 
     function getIdleSiteCount(building, siteNumber) {
       const sitePayload = getIdleSitePayload(building, siteNumber);
       if (Array.isArray(sitePayload.sockets) && sitePayload.sockets.length > 0) {
-        return sitePayload.sockets.filter((socket) => socket.state === '空闲').length;
+        const idleCount = sitePayload.sockets.filter((socket) => socket.state === '空闲').length;
+        if (idleCount > 0) return idleCount;
+        if (sitePayload.sockets.every((socket) => socket.state === '无状态')) return null;
+        return idleCount;
       }
       if (Number.isFinite(sitePayload.availableCount)) return sitePayload.availableCount;
       if (typeof sitePayload.availableCount === 'string' && sitePayload.availableCount.trim() !== '') {
@@ -465,6 +470,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         return { state: '离线', remainingSeconds: null };
       }
       const normalizedState = normalizeIdleSocketDisplayState(state);
+      if (normalizedState === '无状态') {
+        return { state: '无状态', remainingSeconds: null };
+      }
       const remainingSeconds = parseIdleSocketRemainingSeconds(socket);
       if (normalizedState === '充电中') {
         if (Number.isFinite(remainingSeconds) && remainingSeconds <= 0) {
@@ -507,7 +515,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       });
 
       if (!idleQueryBtn) return;
-
       if (idleQueryInFlight) {
         idleQueryBtn.disabled = true;
         idleQueryBtn.textContent = '查询中...';
@@ -979,14 +986,14 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           const socketState = displayState.state === '离线'
             ? 'offline'
             : (displayState.state === '故障' ? 'fault'
-            : (displayState.state === '充电中' ? 'charging' : 'idle'));
+            : (displayState.state === '充电中' ? 'charging' : (displayState.state === '无状态' ? 'pending' : 'idle')));
           const stateText = displayState.state === '离线'
             ? '离线'
             : (displayState.state === '故障'
             ? '故障'
             : (displayState.state === '充电中'
             ? (displayState.remainingSeconds !== null ? formatDuration(displayState.remainingSeconds) : '00:00:00')
-            : '空闲'));
+            : (displayState.state === '无状态' ? '无状态' : '空闲')));
           return `
             <button class="idle-socket-btn ${socketState}" type="button">
               <span class="idle-socket-number">${socket.socketNumber}号</span>

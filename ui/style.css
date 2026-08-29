@@ -518,6 +518,17 @@
       background: rgba(15, 23, 42, 0.03);
     }
 
+    .idle-socket-btn.pending {
+      border-color: rgba(245, 158, 11, 0.24);
+      background: linear-gradient(180deg, rgba(255, 251, 243, 0.98) 0%, rgba(255, 246, 230, 0.98) 100%);
+      color: #ae7e31;
+    }
+
+    .idle-socket-btn.pending .idle-socket-state,
+    .idle-socket-btn.pending .idle-socket-number {
+      color: #ebad48;
+    }
+
     .idle-site-name {
       font-size: 15px;
       font-weight: 600;
