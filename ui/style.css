@@ -1131,6 +1131,23 @@
       cursor: pointer;
     }
 
+    .charge-warning-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .charge-warning-actions .announcement-close {
+      min-width: 112px;
+      margin-top: 18px;
+    }
+
+    .charge-warning-cancel {
+      background: #eef1f4;
+      border: 1px solid #d5dbe1;
+      color: var(--text);
+    }
+
     .announcement-close:hover {
       opacity: 0.9;
     }

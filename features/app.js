@@ -33,6 +33,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let verifyInFlight = false;
     let chargeCooldownUntil = 0;
     let chargeInFlight = false;
+    let chargeWarningOpen = false;
     let authMode = 'login';
     let idleSelectedBuilding = '20栋';
     let idleQueryCooldownUntil = 0;
@@ -1160,6 +1161,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
     async function startCharge() {
       clearFieldErrors();
+      if (chargeWarningOpen) return;
       if (chargeInFlight) {
         setStatus(chargeStatus, '充电请求正在处理中，请不要重复点击。', 'err');
         return;
@@ -1178,6 +1180,11 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       const station_num = fieldGroups.chargeStation.input.value.trim();
       const sid = fieldGroups.chargeSid.input.value.trim();
       const amount = fieldGroups.chargeAmount.input.value.trim();
+
+      const chargeWarningMessage = getChargeWarningMessage(station_num, sid);
+      if (chargeWarningMessage && !(await confirmChargeWarning(chargeWarningMessage))) {
+        return;
+      }
 
       /* 功能2：无论充电请求成功与否，都记住站点号和插座号 */
       saveChargeMemory(station_num, sid);
@@ -1256,6 +1263,11 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const payModalSid = document.getElementById('pay-modal-sid');
     const payModalAmount = document.getElementById('pay-modal-amount');
     const payModalClose = document.getElementById('pay-modal-close');
+    const chargeWarningOverlay = document.getElementById('charge-warning-overlay');
+    const chargeWarningMessage = document.getElementById('charge-warning-message');
+    const chargeWarningCancel = document.getElementById('charge-warning-cancel');
+    const chargeWarningContinue = document.getElementById('charge-warning-continue');
+    let chargeWarningResolve = null;
 
     function showPayReminder(station, sid, amount) {
       payModalSid.textContent = station + '-' + sid;
@@ -1270,6 +1282,46 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     payModalClose.addEventListener('click', closePayReminder);
     payOverlay.addEventListener('click', function (e) {
       if (e.target === payOverlay) closePayReminder();
+    });
+
+    function getChargeWarningMessage(station, sid) {
+      if (station === '11' && (sid === '7' || sid === '4')) {
+        return '11-7和11-4插座是反的，并且大概率都坏了，不知道是否修复，输入4不行就换成7，都不行再换。但不建议充这两个插座。是否继续？';
+      }
+      if (station === '18' && (sid === '5' || sid === '6')) {
+        return '18-5和18-6插座是反的，不知道是否修复，输入5不行就换成6，都不行再换。但不建议充这两个插座。是否继续？';
+      }
+      if (station === '3' && (sid === '1' || sid === '10')) {
+        return '3-1和3-10插座是反的，不知道是否修复，输入1不行就换成10，都不行再换。但不建议充这两个插座。是否继续？';
+      }
+      if ((station === '5' && sid === '8') || (station === '31' && sid === '3')) {
+        return '这个插座99%是坏的，是否继续？';
+      }
+      return '';
+    }
+
+    function confirmChargeWarning(message) {
+      chargeWarningOpen = true;
+      chargeWarningMessage.textContent = message;
+      chargeWarningOverlay.classList.add('show');
+      return new Promise((resolve) => {
+        chargeWarningResolve = resolve;
+      });
+    }
+
+    function closeChargeWarning(shouldContinue) {
+      chargeWarningOverlay.classList.remove('show');
+      chargeWarningOpen = false;
+      if (chargeWarningResolve) {
+        chargeWarningResolve(shouldContinue);
+        chargeWarningResolve = null;
+      }
+    }
+
+    chargeWarningCancel.addEventListener('click', () => closeChargeWarning(false));
+    chargeWarningContinue.addEventListener('click', () => closeChargeWarning(true));
+    chargeWarningOverlay.addEventListener('click', function (e) {
+      if (e.target === chargeWarningOverlay) closeChargeWarning(false);
     });
 
     /* ===== 公告弹窗（刷新 / token失效时提示） ===== */
