@@ -1140,6 +1140,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           saveAuthSession(phone, result.token || '');
           saveLoginCredentials(phone, password);
           setLoggedInUI(phone);
+          showAnnouncement();
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
           beginVerifyCooldown(5);
         } catch (error) {
@@ -1622,7 +1623,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     checkServerHealth();
 
     (async function init() {
-      showAnnouncement();
       const loggedIn = await tryAutoLogin();
       if (!loggedIn) {
         resetAll();
