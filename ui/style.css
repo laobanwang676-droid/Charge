@@ -485,6 +485,16 @@
       min-width: 132px;
     }
 
+    .idle-attention-notice {
+      width: 100%;
+      margin: -2px auto 14px;
+      color: var(--text);
+      font-family: SimHei, "Microsoft YaHei", sans-serif;
+      font-weight: 700;
+      line-height: 1.7;
+      text-align: center;
+    }
+
     /* 空闲插座：楼栋结果列表区域 */
     .idle-result-list {
       display: grid;
