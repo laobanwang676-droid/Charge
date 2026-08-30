@@ -241,6 +241,38 @@
 			flex-basis: 72px;
 		}
 
+		.site.station-offline { background: #f5b8b3; border-color: #d92d20; }
+		.site.station-zero-free { background: #b9d9f5; border-color: #1976d2; }
+		.site.station-idle { background: #f1f3f4; border-color: #c5c9cd; color: #111; }
+
+		.map-legend {
+			display: flex;
+			justify-content: center;
+			gap: 16px;
+			flex-wrap: wrap;
+			margin: 8px auto 0;
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.map-legend-item {
+			display: inline-flex;
+			align-items: center;
+			gap: 5px;
+		}
+
+		.map-legend-swatch {
+			width: 14px;
+			height: 14px;
+			border: 1px solid rgba(17, 17, 17, 0.2);
+			border-radius: 3px;
+		}
+
+		.map-legend-swatch.default { background: var(--paper-3); }
+		.map-legend-swatch.idle { background: #f1f3f4; border-color: #c5c9cd; }
+		.map-legend-swatch.offline { background: #f5b8b3; border-color: #d92d20; }
+		.map-legend-swatch.zero-free { background: #b9d9f5; border-color: #1976d2; }
+
 		.site.empty {
 			background: linear-gradient(180deg, #fff 0%, #fff8f6 100%);
 			border-style: dashed;
@@ -648,9 +680,30 @@
 
 		<div class="road">马路</div>
 		<div class="bottom-reference">12号教学楼</div>
+		<div class="map-legend" aria-label="充电桩状态图例">
+			<span class="map-legend-item"><i class="map-legend-swatch default"></i>初始状态</span>
+			<span class="map-legend-item"><i class="map-legend-swatch idle"></i>有空闲插座</span>
+			<span class="map-legend-item"><i class="map-legend-swatch offline"></i>离线</span>
+			<span class="map-legend-item"><i class="map-legend-swatch zero-free"></i>0个空闲</span>
+		</div>
 	</main>
 	<script>
 		(function () {
+			var rawStates = new URLSearchParams(window.location.search).get('states');
+			if (rawStates) {
+				try {
+					var states = JSON.parse(rawStates);
+					document.querySelectorAll('.site:not(.empty)').forEach(function (site) {
+						var match = site.textContent.match(/\d+/);
+						var status = match && states[match[0]];
+						if (!status || !status.hasStatus) return;
+						if (status.state === '离线') site.classList.add('station-offline');
+						else if (Number(status.availableCount) === 0) site.classList.add('station-zero-free');
+						else if (status.state === '空闲' || Number(status.availableCount) > 0) site.classList.add('station-idle');
+					});
+				} catch (_) { /* ignore invalid map state */ }
+			}
+
 			function fitMapToViewport() {
 				var page = document.querySelector('.page');
 				if (!page || window.innerWidth > 780) return;

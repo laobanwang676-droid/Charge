@@ -188,8 +188,9 @@
 
 		.site {
 			position: absolute;
-			width: 34%;
-			height: 5.2%;
+			width: 16%;
+			height: auto;
+			aspect-ratio: 1;
 			border: 1px solid rgba(143, 106, 100, 0.26);
 			background: linear-gradient(180deg, #fff 0%, var(--panel-strong) 100%);
 			border-radius: 12px;
@@ -198,11 +199,12 @@
 			align-items: center;
 			justify-content: center;
 			font-size: clamp(10px, 1.35vw, 14px);
+			font-weight: 700;
 			line-height: 1.12;
 			white-space: normal;
 			word-break: keep-all;
 			text-align: center;
-			padding: 0 8px;
+			padding: 8px 6px;
 		}
 
 		.site.empty {
@@ -210,8 +212,52 @@
 			border-style: dashed;
 		}
 
-		.left-site { left: 12%; }
-		.right-site { right: 12%; }
+		.site.station-offline {
+			background: #f5b8b3;
+			border-color: #d92d20;
+		}
+
+		.site.station-zero-free {
+			background: #b9d9f5;
+			border-color: #1976d2;
+		}
+
+		.site.station-idle {
+			background: #f1f3f4;
+			border-color: #c5c9cd;
+			color: #111;
+		}
+
+		.map-legend {
+			display: flex;
+			justify-content: center;
+			gap: 16px;
+			flex-wrap: wrap;
+			margin: 8px auto 0;
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.map-legend-item {
+			display: inline-flex;
+			align-items: center;
+			gap: 5px;
+		}
+
+		.map-legend-swatch {
+			width: 14px;
+			height: 14px;
+			border: 1px solid rgba(17, 17, 17, 0.2);
+			border-radius: 3px;
+		}
+
+		.map-legend-swatch.default { background: var(--panel-strong); }
+		.map-legend-swatch.idle { background: #f1f3f4; border-color: #c5c9cd; }
+		.map-legend-swatch.offline { background: #f5b8b3; border-color: #d92d20; }
+		.map-legend-swatch.zero-free { background: #b9d9f5; border-color: #1976d2; }
+
+		.left-site { left: 30%; }
+		.right-site { right: 30%; }
 
 		.r1 { top: 5.2%; }
 		.r2 { top: 15.1%; }
@@ -289,9 +335,8 @@
 			}
 			.site {
 				font-size: clamp(9px, 2.6vw, 12px);
-				height: 62px;
+				padding: 8px 5px;
 				border-radius: 10px;
-				padding: 0 5px;
 			}
 			.dorm span {
 				font-size: clamp(28px, 8vw, 40px);
@@ -307,8 +352,8 @@
 				padding: 8px 12px;
 				font-size: 12px;
 			}
-			.left-site { left: 10%; }
-			.right-site { right: 10%; }
+			.left-site { left: 30%; }
+			.right-site { right: 30%; }
 		}
 	</style>
 </head>
@@ -356,9 +401,33 @@
 			<div class="gatehouse"><span>保安亭</span></div>
 			<div class="entry">入口</div>
 		</section>
+		<div class="map-legend" aria-label="充电桩状态图例">
+			<span class="map-legend-item"><i class="map-legend-swatch default"></i>初始状态</span>
+			<span class="map-legend-item"><i class="map-legend-swatch idle"></i>有空闲插座</span>
+			<span class="map-legend-item"><i class="map-legend-swatch offline"></i>离线</span>
+			<span class="map-legend-item"><i class="map-legend-swatch zero-free"></i>0个空闲</span>
+		</div>
 	</main>
 		<script>
 		(function () {
+			function applyStationStates() {
+				var rawStates = new URLSearchParams(window.location.search).get('states');
+				if (!rawStates) return;
+				var states;
+				try { states = JSON.parse(rawStates); } catch (_) { return; }
+				document.querySelectorAll('.site:not(.empty)').forEach(function (site) {
+					var match = site.textContent.match(/\d+/);
+					if (!match || !states[match[0]]) return;
+					var status = states[match[0]];
+					if (!status.hasStatus) return;
+					if (status.state === '离线') site.classList.add('station-offline');
+					else if (Number(status.availableCount) === 0) site.classList.add('station-zero-free');
+					else if (status.state === '空闲' || Number(status.availableCount) > 0) site.classList.add('station-idle');
+				});
+			}
+
+			applyStationStates();
+
 			function fitMapToViewport() {
 				var page = document.querySelector('.page');
 				if (!page || window.innerWidth > 760) return;

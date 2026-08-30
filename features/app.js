@@ -870,11 +870,24 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     function openIdleMapPage() {
       const mapFile = idleMapFiles[idleSelectedBuilding];
       if (!mapFile) return;
+      const areaData = getIdleAreaData(idleSelectedBuilding);
+      const stationStates = {};
+      Object.keys(areaData.siteMap || {}).forEach((siteNumber) => {
+        const sitePayload = areaData.siteMap[siteNumber] || {};
+        stationStates[siteNumber] = {
+          state: sitePayload.state || '',
+          availableCount: sitePayload.availableCount,
+          hasStatus: (typeof sitePayload.state === 'string' && sitePayload.state.trim() !== '') || Number.isFinite(sitePayload.availableCount),
+        };
+      });
       try {
         sessionStorage.setItem('charge-map-return', JSON.stringify({ tab: 'idle', building: idleSelectedBuilding }));
         sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
       } catch (_) { /* ignore */ }
-      window.location.href = mapFile;
+      const mapQuery = Object.keys(stationStates).length > 0
+        ? `?states=${encodeURIComponent(JSON.stringify(stationStates))}`
+        : '';
+      window.location.href = mapFile + mapQuery;
     }
 
     /* 空闲插座：查询按钮点击区域 */
