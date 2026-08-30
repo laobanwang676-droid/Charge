@@ -21,7 +21,7 @@
 
 		@media (max-width: 760px) {
 			.page {
-				zoom: var(--initial-map-scale, 1);
+				zoom: min(1, calc(100vw / 860px));
 			}
 		}
 

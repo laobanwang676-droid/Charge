@@ -23,7 +23,7 @@
 
 		@media (max-width: 780px) {
 			.page {
-				zoom: var(--initial-map-scale, 1);
+				zoom: min(1, calc(100vw / 860px));
 			}
 		}
 
