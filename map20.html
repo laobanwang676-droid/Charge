@@ -252,16 +252,26 @@
 		}
 
 		@media (max-width: 760px) {
-			body { padding: 0; background: #fff; }
+			body {
+				display: block;
+				padding: 0;
+				background: #fff;
+				overflow-x: auto;
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
+			}
 			.page {
-				width: 100%;
+				width: 860px;
+				max-width: none;
 				min-height: 100vh;
 				padding: 4px 6px 12px;
 				box-shadow: none;
 				border-radius: 0;
+				overflow: visible;
 			}
 			.map {
-				width: min(100%, 460px);
+				width: 820px;
+				max-width: none;
 				min-height: 1160px;
 				aspect-ratio: auto;
 				margin-top: -92px;
