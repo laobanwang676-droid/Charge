@@ -41,10 +41,14 @@
 
 		.page {
 			width: min(100%, 980px);
+			min-height: calc(100vh - 52px);
 			background: linear-gradient(180deg, #fff 0%, #fffdfc 100%);
 			padding: 10px 12px 18px;
 			position: relative;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
 			box-shadow: var(--shadow);
 			border: 1px solid rgba(143, 106, 100, 0.12);
 			border-radius: 18px;
