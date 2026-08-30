@@ -19,12 +19,6 @@
 
 		* { box-sizing: border-box; }
 
-		@media (max-width: 760px) {
-			.page {
-				zoom: min(1, calc(100vw / 860px));
-			}
-		}
-
 		html, body {
 			margin: 0;
 			min-height: 100%;
@@ -421,15 +415,6 @@
 				} catch (_) { /* ignore invalid map state */ }
 			}
 
-			function fitMapToViewport() {
-				var page = document.querySelector('.page');
-				if (!page || window.innerWidth > 760) return;
-				var scale = Math.min(1, window.innerWidth / page.offsetWidth);
-				page.style.setProperty('--initial-map-scale', String(scale));
-			}
-
-			fitMapToViewport();
-			window.addEventListener('resize', fitMapToViewport);
 		})();
 
 		function goBackToPreviousPage() {
