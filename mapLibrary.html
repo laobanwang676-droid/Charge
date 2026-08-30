@@ -41,7 +41,6 @@
 			border: 1px solid rgba(143, 106, 100, 0.12);
 			border-radius: 18px;
 			box-shadow: var(--shadow);
-			overflow: hidden;
 			padding: 12px 12px 16px;
 		}
 
@@ -256,13 +255,20 @@
 		}
 
 		@media (max-width: 780px) {
-			body { padding: 0; background: #fff; }
+			body {
+				padding: 0;
+				background: #fff;
+				overflow-x: auto;
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
+			}
 			.page {
-				width: 100%;
+				width: max-content;
 				min-height: 100vh;
 				border-radius: 0;
 				box-shadow: none;
 				padding: 10px 8px 14px;
+				min-width: 100%;
 			}
 			.top-reference {
 				height: 38px;
@@ -276,6 +282,11 @@
 			.map {
 				aspect-ratio: auto;
 				min-height: 1180px;
+				width: 920px;
+			}
+			.parking-area {
+				width: 920px;
+				align-items: flex-start;
 			}
 			.grid {
 				left: 5.4%;
@@ -322,6 +333,7 @@
 				font-size: clamp(9px, 2.8vw, 13px);
 				line-height: 1.12;
 				padding: 3px 4px;
+				overflow: visible;
 			}
 			.entry {
 				bottom: 18.0%;
@@ -508,6 +520,9 @@
 
 			.parking-area {
 				padding-top: 18px;
+				padding-left: 0;
+				padding-right: 0;
+				overflow-x: visible;
 			}
 
 			.aisle {

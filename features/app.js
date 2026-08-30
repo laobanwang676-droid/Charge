@@ -74,22 +74,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return '故障';
     }
 
-    function normalizeIdleSocketList(socketList) {
-      if (!Array.isArray(socketList)) return [];
-      return socketList
-        .map((socket, index) => {
-          const socketNumber = Number(socket?.socketNo ?? socket?.socket_num ?? socket?.socketNumber ?? socket?.sid ?? index + 1);
-          if (!Number.isFinite(socketNumber)) return null;
-          return {
-            socketNumber,
-            state: normalizeIdleSocketDisplayState(socket?.state ?? socket?.status ?? socket?.socketState),
-            remainingSeconds: parseIdleSocketRemainingSeconds(socket),
-          };
-        })
-        .filter(Boolean)
-        .sort((left, right) => left.socketNumber - right.socketNumber);
-    }
-
     function normalizeIdleProductList(productList) {
       if (!Array.isArray(productList)) return [];
       return productList
@@ -174,7 +158,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           }
 
           const offline = Boolean(station?.offline);
-          const busyCount = Number(station?.busy_count ?? station?.busyCount);
           const hasChargingSocket = productList.length > 0 && sockets.some((socket) => socket.state === '充电中');
           const hasExplicitIdleSocket = productList.length > 0 && sockets.some((socket) => socket.state === '空闲');
 
@@ -296,8 +279,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       cards.forEach((card) => {
         const siteNumber = Number(card.getAttribute('data-idle-site'));
         if (!Number.isFinite(siteNumber)) return;
-        const siteKey = getIdleSiteKey(building, siteNumber);
-
         const state = getIdleSiteState(building, siteNumber);
         card.classList.toggle('offline', state === '离线');
         card.classList.toggle('charging', state === '充电中');
