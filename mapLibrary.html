@@ -21,6 +21,12 @@
 
 		* { box-sizing: border-box; }
 
+		@media (max-width: 780px) {
+			.page {
+				zoom: var(--initial-map-scale, 1);
+			}
+		}
+
 		html, body {
 			margin: 0;
 			min-height: 100%;
@@ -644,6 +650,18 @@
 		<div class="bottom-reference">12号教学楼</div>
 	</main>
 	<script>
+		(function () {
+			function fitMapToViewport() {
+				var page = document.querySelector('.page');
+				if (!page || window.innerWidth > 780) return;
+				var scale = Math.min(1, window.innerWidth / page.offsetWidth);
+				page.style.setProperty('--initial-map-scale', String(scale));
+			}
+
+			fitMapToViewport();
+			window.addEventListener('resize', fitMapToViewport);
+		})();
+
 		function goBackToPreviousPage() {
 			if (history.length > 1) {
 				history.back();
