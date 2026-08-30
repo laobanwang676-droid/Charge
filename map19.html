@@ -433,7 +433,14 @@
 		})();
 
 		function goBackToPreviousPage() {
-			if (history.length > 1) {
+			var referrer = document.referrer;
+			var cameFromHome = false;
+			try {
+				var referrerUrl = referrer ? new URL(referrer, window.location.href) : null;
+				cameFromHome = referrerUrl && referrerUrl.origin === window.location.origin
+					&& (referrerUrl.pathname.endsWith('/index.html') || referrerUrl.pathname.endsWith('/'));
+			} catch (_) {}
+			if (cameFromHome && history.length > 1) {
 				history.back();
 				return;
 			}
