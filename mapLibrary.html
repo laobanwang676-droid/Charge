@@ -256,6 +256,7 @@
 
 		@media (max-width: 780px) {
 			body {
+				display: block;
 				padding: 0;
 				background: #fff;
 				overflow-x: auto;
@@ -263,8 +264,10 @@
 				-webkit-overflow-scrolling: touch;
 			}
 			.page {
-				width: max-content;
+				width: 860px;
+				max-width: none;
 				min-height: 100vh;
+				margin: 0;
 				border-radius: 0;
 				box-shadow: none;
 				padding: 10px 8px 14px;
@@ -285,7 +288,8 @@
 				width: 920px;
 			}
 			.parking-area {
-				width: 920px;
+				width: 860px;
+				max-width: none;
 				align-items: flex-start;
 			}
 			.grid {
@@ -504,6 +508,11 @@
 
 
 		@media (max-width: 780px) {
+			.page {
+				width: 860px;
+				max-width: none;
+			}
+
 			.road {
 				height: 48px;
 				margin-top: 22px;
@@ -519,6 +528,8 @@
 			}
 
 			.parking-area {
+				width: 860px;
+				max-width: none;
 				padding-top: 18px;
 				padding-left: 0;
 				padding-right: 0;
@@ -534,6 +545,8 @@
 			}
 
 			.rows {
+				width: 860px;
+				max-width: none;
 				gap: 72px;
 			}
 
