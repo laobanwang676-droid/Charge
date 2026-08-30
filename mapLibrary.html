@@ -41,6 +41,7 @@
 			border: 1px solid rgba(143, 106, 100, 0.12);
 			border-radius: 18px;
 			box-shadow: var(--shadow);
+			overflow: hidden;
 			padding: 12px 12px 16px;
 		}
 
@@ -132,16 +133,35 @@
 		}
 
 		.aisle-label {
-			position: absolute;
-			left: 20%;
-			top: 50%;
-			transform: translateY(-50%);
+			position: static;
+			transform: none;
 			font-size: clamp(24px, 3vw, 34px);
 			font-weight: 900;
-			color: var(--line);
+			color: #111111;
 			writing-mode: vertical-rl;
 			text-orientation: upright;
 			letter-spacing: 0;
+		}
+
+		.map-return {
+			position: fixed;
+			left: 16px;
+			top: 16px;
+			z-index: 50;
+			padding: 10px 14px;
+			border-radius: 999px;
+			border: 1px solid rgba(143, 106, 100, 0.24);
+			background: rgba(255, 255, 255, 0.96);
+			color: var(--ink);
+			font-weight: 900;
+			text-decoration: none;
+			cursor: pointer;
+			appearance: none;
+			box-shadow: 0 8px 18px rgba(115, 72, 62, 0.10);
+		}
+
+		.map-return:hover {
+			background: #fff;
 		}
 
 		.row {
@@ -191,11 +211,16 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			padding: 0 8px;
+			padding: 4px 6px;
 			text-align: center;
-			font-size: clamp(10px, 1.18vw, 13px);
-			line-height: 1.08;
+			font-size: clamp(12px, 1.4vw, 16px);
+			line-height: 1.15;
 			font-weight: 700;
+			white-space: normal;
+			word-break: keep-all;
+			overflow-wrap: anywhere;
+			max-height: 100%;
+			overflow: hidden;
 		}
 
 		.left-group.two .site,
@@ -278,6 +303,12 @@
 			.aisle-label {
 				font-size: clamp(18px, 5vw, 24px);
 			}
+			.map-return {
+				left: 10px;
+				top: 10px;
+				padding: 8px 12px;
+				font-size: 12px;
+			}
 			.row { height: 6.4%; }
 			.row.top { top: 2.8%; }
 			.row.mid { top: 29.0%; }
@@ -288,8 +319,9 @@
 			.site {
 				flex-basis: 64px;
 				border-radius: 10px;
-				font-size: 8px;
-				padding: 0 5px;
+				font-size: clamp(9px, 2.8vw, 13px);
+				line-height: 1.12;
+				padding: 3px 4px;
 			}
 			.entry {
 				bottom: 18.0%;
@@ -299,7 +331,8 @@
 
 		/* Rebuilt flow layout */
 		.page {
-			width: min(100%, 960px);
+			width: 100%;
+			max-width: 960px;
 			padding: 12px 16px 18px;
 		}
 
@@ -337,6 +370,9 @@
 			border-bottom: 0;
 			border-left: 2px dashed var(--dash);
 			border-radius: 18px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 		}
 
 		.rows {
@@ -398,8 +434,8 @@
 			flex: 0 0 76px;
 			height: 74px;
 			padding: 0 6px;
-			font-size: 12px;
-			line-height: 1.15;
+				font-size: 13px;
+				line-height: 1.12;
 		}
 
 		.entry {
@@ -477,6 +513,9 @@
 			.aisle {
 				left: 32%;
 				width: 14.2%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
 			}
 
 			.rows {
@@ -502,7 +541,8 @@
 				flex-basis: 58px;
 				height: 62px;
 				border-radius: 10px;
-				font-size: 8px;
+				font-size: clamp(8px, 2.8vw, 11px);
+				line-height: 1.08;
 			}
 
 			.entry {
@@ -532,6 +572,7 @@
 	</style>
 </head>
 <body>
+		<button class="map-return" type="button" onclick="goBackToPreviousPage()">返回</button>
 	<main class="page">
 		<div class="library">图书馆</div>
 		<h1 class="title">综合楼充电桩分布图</h1>
@@ -574,5 +615,14 @@
 		<div class="road">马路</div>
 		<div class="bottom-reference">12号教学楼</div>
 	</main>
+	<script>
+		function goBackToPreviousPage() {
+			if (history.length > 1) {
+				history.back();
+				return;
+			}
+			window.location.replace('index.html');
+		}
+	</script>
 </body>
 </html>

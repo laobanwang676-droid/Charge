@@ -17,8 +17,16 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const registerCheckOverlay = document.getElementById('register-check-overlay');
     const registerCheckCopy = document.getElementById('register-check-copy');
     const idleQueryBtn = document.getElementById('idle-query-btn');
+    const idleMapBtn = document.getElementById('idle-map-btn');
     const idleResultList = document.getElementById('idle-result-list');
     const idleButtons = Array.from(document.querySelectorAll('[data-idle-building]'));
+
+    const idleMapFiles = {
+      '20栋': 'map20.html',
+      '19栋': 'map19.html',
+      '图书馆': 'mapLibrary.html',
+      '南门': 'mapSouth.html',
+    };
 
     let themeMode = 'light';
     let verifyCooldownUntil = 0;
@@ -868,7 +876,24 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         button.classList.toggle('active', button.dataset.idleBuilding === building);
       });
       updateIdleQueryButtonState();
+      updateIdleMapButtonState();
       renderIdleResult(building);
+    }
+
+    function updateIdleMapButtonState() {
+      if (!idleMapBtn) return;
+      idleMapBtn.textContent = `查看${idleSelectedBuilding}地图`;
+      idleMapBtn.disabled = !idleMapFiles[idleSelectedBuilding];
+    }
+
+    function openIdleMapPage() {
+      const mapFile = idleMapFiles[idleSelectedBuilding];
+      if (!mapFile) return;
+      try {
+        sessionStorage.setItem('charge-map-return', JSON.stringify({ tab: 'idle', building: idleSelectedBuilding }));
+        sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
+      } catch (_) { /* ignore */ }
+      window.location.href = mapFile;
     }
 
     /* 空闲插座：查询按钮点击区域 */
@@ -1357,6 +1382,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       idleQueryBtn.addEventListener('click', queryIdleSockets);
     }
 
+    if (idleMapBtn) {
+      idleMapBtn.addEventListener('click', openIdleMapPage);
+    }
+
     if (idleResultList) {
       idleResultList.addEventListener('click', function (event) {
         const summary = event.target.closest('.idle-site-summary');
@@ -1452,7 +1481,32 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       applyTheme('light');
     }
 
-    switchIdleBuilding('20栋');
+    /* 从地图页返回：恢复进入地图前的页面状态（空闲插座 tab + 楼栋） */
+    let restoredReturnState = null;
+    try {
+      const savedReturn = sessionStorage.getItem('charge-map-return');
+      if (savedReturn) {
+        sessionStorage.removeItem('charge-map-return');
+        restoredReturnState = JSON.parse(savedReturn);
+      }
+    } catch (_) { /* ignore */ }
+
+    const initialIdleBuilding = restoredReturnState && restoredReturnState.tab === 'idle' && restoredReturnState.building
+      ? restoredReturnState.building
+      : '20栋';
+
+    switchIdleBuilding(initialIdleBuilding);
+
+    if (restoredReturnState && restoredReturnState.tab === 'idle') {
+      switchTab('idle');
+      if (restoredReturnState.building) switchIdleBuilding(restoredReturnState.building);
+      try {
+        const savedScrollY = Number(sessionStorage.getItem('charge-map-scroll-y'));
+        if (Number.isFinite(savedScrollY) && savedScrollY >= 0) {
+          window.requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+        }
+      } catch (_) { /* ignore */ }
+    }
 
     /* ===== 功能3：服务器健康检测 ===== */
     async function checkServerHealth() {
