@@ -713,7 +713,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     /* ===== 7天登录持久化 ===== */
     const AUTH_STORAGE_KEY = 'charge-auth-session';
     const LOGIN_CREDENTIALS_KEY = 'charge-login-credentials';
-    const AUTH_VALIDITY_MS = 7 * 24 * 60 * 60 * 1000;
+    const AUTH_VALIDITY_MS = 24 * 60 * 60 * 1000;
 
     function saveAuthSession(phone, token) {
       try {
