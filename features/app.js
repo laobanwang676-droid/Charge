@@ -1269,14 +1269,54 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const chargeWarningCancel = document.getElementById('charge-warning-cancel');
     const chargeWarningContinue = document.getElementById('charge-warning-continue');
     let chargeWarningResolve = null;
+    let payModalCooldownTimer = null;
+    let payModalCountdownInterval = null;
+
+    const payModalDefaultText = '已付款，已备注插座号';
+
+    function setPayModalButtonState(disabled, text) {
+      payModalClose.disabled = disabled;
+      payModalClose.textContent = text;
+    }
+
+    function clearPayModalCooldown() {
+      if (payModalCooldownTimer) {
+        clearTimeout(payModalCooldownTimer);
+        payModalCooldownTimer = null;
+      }
+      if (payModalCountdownInterval) {
+        clearInterval(payModalCountdownInterval);
+        payModalCountdownInterval = null;
+      }
+    }
 
     function showPayReminder(station, sid, amount) {
+      clearPayModalCooldown();
       payModalSid.textContent = station + '-' + sid;
       payModalAmount.textContent = Number(amount).toFixed(1);
+      setPayModalButtonState(true, payModalDefaultText + '（3s）');
       payOverlay.classList.add('show');
+
+      let remainingSeconds = 3;
+      payModalCountdownInterval = window.setInterval(function () {
+        remainingSeconds -= 1;
+        if (remainingSeconds > 0) {
+          setPayModalButtonState(true, payModalDefaultText + '（' + remainingSeconds + 's）');
+          return;
+        }
+        clearPayModalCooldown();
+        setPayModalButtonState(false, payModalDefaultText);
+      }, 1000);
+
+      payModalCooldownTimer = window.setTimeout(function () {
+        clearPayModalCooldown();
+        setPayModalButtonState(false, payModalDefaultText);
+      }, 3000);
     }
 
     function closePayReminder() {
+      clearPayModalCooldown();
+      setPayModalButtonState(false, payModalDefaultText);
       payOverlay.classList.remove('show');
     }
 

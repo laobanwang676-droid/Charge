@@ -1058,7 +1058,13 @@
       background: var(--accent);
       color: #fff;
       font-size: 14px;
+      white-space: nowrap;
       cursor: pointer;
+    }
+
+    .pay-modal-close:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
     .pay-modal-close:hover {
