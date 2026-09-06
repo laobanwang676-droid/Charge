@@ -368,6 +368,87 @@
 			text-align: center;
 			white-space: nowrap;
 		}
+
+		/* 点击站点弹出的空闲插座气泡 */
+		.site-tip {
+			position: fixed;
+			z-index: 9999;
+			min-width: 96px;
+			max-width: 230px;
+			box-sizing: border-box;
+			padding: 9px 22px 9px 11px;
+			background: #ffffff;
+			border: 1px solid rgba(25, 118, 210, 0.35);
+			border-radius: 10px;
+			box-shadow: 0 10px 24px rgba(17, 17, 17, 0.18);
+			font-size: 12px;
+			font-weight: 700;
+			line-height: 1.4;
+			color: #111;
+		}
+
+		.site-tip-head {
+			margin-bottom: 5px;
+			font-size: 13px;
+		}
+
+		.site-tip-head .site-tip-count {
+			color: #1976d2;
+		}
+
+		.site-tip-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 4px;
+		}
+
+		.site-tip-num {
+			display: inline-block;
+			padding: 1px 6px;
+			border-radius: 6px;
+			background: #e7f1fd;
+			color: #0b5cad;
+			font-size: 12px;
+			font-weight: 800;
+		}
+
+		.site-tip-note {
+			color: #666;
+			font-weight: 600;
+		}
+
+		.site-tip-close {
+			position: absolute;
+			top: 4px;
+			right: 4px;
+			width: 20px;
+			height: 20px;
+			padding: 0;
+			border: none;
+			border-radius: 50%;
+			background: transparent;
+			color: #999;
+			font-size: 16px;
+			font-weight: 700;
+			line-height: 20px;
+			text-align: center;
+			cursor: pointer;
+		}
+
+		.site-tip-close:hover {
+			background: rgba(17, 17, 17, 0.08);
+			color: #111;
+		}
+
+		/* 点击查看空闲插座提示 */
+		.map-hint {
+			margin-top: 10px;
+			font-size: 12px;
+			font-family: "SimHei", "Microsoft YaHei", sans-serif;
+			font-weight: 700;
+			color: #0d47a1;
+			text-align: center;
+		}
 	</style>
 </head>
 <body>
@@ -420,6 +501,7 @@
 			<span class="map-legend-item"><i class="map-legend-swatch offline"></i>离线</span>
 			<span class="map-legend-item"><i class="map-legend-swatch zero-free"></i>0个空闲</span>
 		</div>
+		<div class="map-hint">点击有空闲的充电桩，可查看具体是哪些插座空闲</div>
 	</main>
 		<script>
 		(function () {
@@ -475,6 +557,146 @@
 				badge.textContent = '空闲数' + freeCount;
 				site.appendChild(badge);
 			});
+		})();
+	</script>
+	<script>
+		(function () {
+			var rawStates = new URLSearchParams(window.location.search).get('states');
+			var states = null;
+			if (rawStates) {
+				try { states = JSON.parse(rawStates); } catch (_) { states = null; }
+			}
+
+			var tip = null;
+			var tipSite = null;
+
+			function closeTip() {
+				if (tip) {
+					tip.remove();
+					tip = null;
+				}
+				tipSite = null;
+			}
+
+			function placeTip(site) {
+				if (!tip) return;
+				var rect = site.getBoundingClientRect();
+				tip.style.visibility = 'hidden';
+				tip.style.left = '0px';
+				tip.style.top = '0px';
+				var tipW = tip.offsetWidth;
+				var tipH = tip.offsetHeight;
+				var gap = 10;
+				var vw = window.innerWidth;
+				var rightRoom = vw - 8 - (rect.right + gap);
+				var leftRoom = rect.left - gap - 8;
+				var left;
+				if (rightRoom >= tipW) {
+					// 右侧放得下：默认右上
+					left = rect.right + gap;
+				} else if (leftRoom >= tipW) {
+					// 右侧放不下但左侧够：翻转左上，避免越界
+					left = rect.left - tipW - gap;
+				} else if (rightRoom >= leftRoom) {
+					// 两侧都不够：取空间更大的一侧并尽量贴边
+					left = Math.max(8, Math.min(rect.right + gap, vw - tipW - 8));
+				} else {
+					left = Math.max(8, Math.min(rect.left - tipW - gap, vw - tipW - 8));
+				}
+				if (left < 8) left = 8;
+				if (left + tipW > vw - 8) left = vw - tipW - 8;
+				var top = rect.top - tipH + 6;
+				if (top < 8) top = 8;
+				if (top + tipH > window.innerHeight - 8) {
+					top = Math.max(8, window.innerHeight - tipH - 8);
+				}
+				tip.style.left = left + 'px';
+				tip.style.top = top + 'px';
+				tip.style.visibility = 'visible';
+			}
+
+			function showTip(site, status) {
+				closeTip();
+				var siteMatch = site.textContent.match(/\d+/);
+				var siteNo = siteMatch ? siteMatch[0] : '';
+				var nums = (status && Array.isArray(status.freeSocketNumbers) && status.freeSocketNumbers.length > 0)
+					? status.freeSocketNumbers
+					: null;
+				var count = Number(status && status.availableCount);
+
+				if (!nums && !(count > 0)) {
+					return;
+				}
+
+				tip = document.createElement('div');
+				tip.className = 'site-tip';
+
+				if (nums && nums.length > 0) {
+					var head = document.createElement('div');
+					head.className = 'site-tip-head';
+					head.innerHTML = siteNo + '号充电桩 空闲 <span class="site-tip-count">' + nums.length + '</span> 个：';
+					tip.appendChild(head);
+
+					var list = document.createElement('div');
+					list.className = 'site-tip-list';
+					nums.forEach(function (n) {
+						var chip = document.createElement('span');
+						chip.className = 'site-tip-num';
+						chip.textContent = n + '号';
+						list.appendChild(chip);
+					});
+					tip.appendChild(list);
+				} else {
+					var note = document.createElement('div');
+					note.className = 'site-tip-note';
+					note.textContent = '该充电桩有 ' + count + ' 个空闲插座（明细暂不可用）';
+					tip.appendChild(note);
+				}
+
+				var closeBtn = document.createElement('button');
+				closeBtn.className = 'site-tip-close';
+				closeBtn.type = 'button';
+				closeBtn.setAttribute('aria-label', '关闭');
+				closeBtn.textContent = '\u00d7';
+				closeBtn.addEventListener('click', function (ev) {
+					ev.stopPropagation();
+					closeTip();
+				});
+				tip.appendChild(closeBtn);
+
+				document.body.appendChild(tip);
+				tipSite = site;
+				placeTip(site);
+			}
+
+			document.querySelectorAll('.site:not(.empty)').forEach(function (site) {
+				site.style.cursor = 'pointer';
+				site.addEventListener('click', function (ev) {
+					ev.stopPropagation();
+					if (site === tipSite) {
+						closeTip();
+						return;
+					}
+					var match = site.textContent.match(/\d+/);
+					var status = match && states ? states[match[0]] : null;
+					if (!status || !status.hasStatus) {
+						closeTip();
+						return;
+					}
+					showTip(site, status);
+				});
+			});
+
+			document.addEventListener('click', function (ev) {
+				if (!tip) return;
+				if (ev.target && ev.target.closest && (ev.target.closest('.site-tip') || ev.target.closest('.site:not(.empty)'))) {
+					return;
+				}
+				closeTip();
+			});
+
+			window.addEventListener('scroll', closeTip, true);
+			window.addEventListener('resize', closeTip);
 		})();
 	</script>
 </body>

@@ -875,9 +875,15 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       const stationStates = {};
       Object.keys(areaData.siteMap || {}).forEach((siteNumber) => {
         const sitePayload = areaData.siteMap[siteNumber] || {};
+        const freeSocketNumbers = Array.isArray(sitePayload.sockets)
+          ? sitePayload.sockets
+              .filter((socket) => socket && socket.state === '空闲')
+              .map((socket) => socket.socketNumber)
+          : [];
         stationStates[siteNumber] = {
           state: sitePayload.state || '',
           availableCount: sitePayload.availableCount,
+          freeSocketNumbers,
           hasStatus: (typeof sitePayload.state === 'string' && sitePayload.state.trim() !== '') || Number.isFinite(sitePayload.availableCount),
         };
       });
