@@ -903,7 +903,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       idleQueryInFlight = true;
       updateIdleQueryButtonState();
       clearIdleQueryStatusTimer();
-      setIdleQueryNotice('正在查询空闲插座，请稍候...', '');
+      setIdleQueryNotice('正在查询空闲插座，查询耗时随网络情况波动，请稍候...', '');
       beginIdleQueryCooldown(15);
 
       const controller = new AbortController();
