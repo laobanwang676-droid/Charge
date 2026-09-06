@@ -657,5 +657,26 @@
 			window.addEventListener('resize', closeTip);
 		})();
 	</script>
+	<script>
+		(function () {
+			/* 进入地图默认定位到页面底部，让图例与提示说明先可见，再向上浏览地图 */
+			if ('scrollRestoration' in history) {
+				history.scrollRestoration = 'manual';
+			}
+			function scrollToLegend() {
+				var doc = document.scrollingElement || document.documentElement;
+				var maxTop = doc.scrollHeight - window.innerHeight;
+				if (maxTop > 0) {
+					window.scrollTo(0, maxTop);
+				}
+			}
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', scrollToLegend);
+			} else {
+				scrollToLegend();
+			}
+			window.addEventListener('load', scrollToLegend);
+		})();
+	</script>
 </body>
 </html>

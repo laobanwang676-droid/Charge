@@ -49,6 +49,24 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       '19栋': [40, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72]
     };
 
+    /* 部分站点实际未安装满 10 个插座：后端仍会按 10 个上报。
+       这里限制有效插座数量，23 号与 30 号充电桩实际只有 1-7 号共 7 个插座。 */
+    const idleStationSocketLimitMap = {
+      23: 7,
+      30: 7,
+    };
+
+    function getIdleStationSocketLimit(siteNumber) {
+      const limit = idleStationSocketLimitMap[Number(siteNumber)];
+      return Number.isFinite(limit) ? limit : null;
+    }
+
+    function limitIdleSockets(siteNumber, sockets) {
+      const limit = getIdleStationSocketLimit(siteNumber);
+      if (limit === null || !Array.isArray(sockets)) return sockets;
+      return sockets.filter((socket) => Number(socket.socketNumber) <= limit);
+    }
+
     const idleAreaResponseCache = {
       '20栋': { siteMap: {}, siteNumbers: [] },
       '19栋': { siteMap: {}, siteNumbers: [] },
@@ -144,7 +162,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           const productList = Array.isArray(station?.products)
             ? station.products
             : (Array.isArray(station?.sockets) ? station.sockets : (Array.isArray(station?.ports) ? station.ports : []));
-          const sockets = productList.length > 0 ? normalizeIdleProductList(productList) : buildIdleSocketsFromStationSummary(station);
+          let sockets = productList.length > 0 ? normalizeIdleProductList(productList) : buildIdleSocketsFromStationSummary(station);
+          sockets = limitIdleSockets(stationNumber, sockets);
 
           const availableCountRaw = station?.free_count ?? station?.freeCount;
           let availableCount = null;
@@ -154,8 +173,16 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
             const parsedCount = Number(availableCountRaw);
             if (Number.isFinite(parsedCount)) availableCount = parsedCount;
           }
-          if (availableCount === null && sockets.length > 0) {
+
+          const socketLimit = getIdleStationSocketLimit(stationNumber);
+          if (socketLimit !== null && productList.length > 0) {
+            /* 有逐插座明细：未安装插座不算，空闲数改为按有效插座重算 */
             availableCount = sockets.filter((socket) => socket.state === '空闲').length;
+          } else if (availableCount === null && sockets.length > 0) {
+            availableCount = sockets.filter((socket) => socket.state === '空闲').length;
+          }
+          if (socketLimit !== null && availableCount !== null) {
+            availableCount = Math.min(availableCount, socketLimit);
           }
 
           const offline = Boolean(station?.offline);
@@ -264,7 +291,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         return sitePayload.sockets;
       }
 
-      return Array.from({ length: 10 }, (_, index) => {
+      const socketLimit = getIdleStationSocketLimit(siteNumber);
+      const defaultSocketCount = socketLimit === null ? 10 : socketLimit;
+      return Array.from({ length: defaultSocketCount }, (_, index) => {
         const socketNumber = index + 1;
         return {
           socketNumber,
@@ -476,7 +505,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return { state: '空闲', remainingSeconds: null };
     }
 
-    function beginIdleQueryCooldown(seconds = 15) {
+    function beginIdleQueryCooldown(seconds = 20) {
       idleQueryCooldownUntil = Date.now() + seconds * 1000;
       updateIdleQueryButtonState();
 
@@ -910,10 +939,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       updateIdleQueryButtonState();
       clearIdleQueryStatusTimer();
       setIdleQueryNotice('正在查询空闲插座，查询耗时随网络情况波动，请稍候...', '');
-      beginIdleQueryCooldown(15);
+      beginIdleQueryCooldown(20);
 
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+      const timeoutId = window.setTimeout(() => controller.abort(), 20000);
       const headers = { 'Content-Type': 'application/json' };
       try {
         const session = loadAuthSession();
