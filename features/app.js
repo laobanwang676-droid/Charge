@@ -1175,7 +1175,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           const result = await api('/api/auth', { phone, password, action: 'login' });
           saveAuthSession(phone, result.token || '');
           saveLoginCredentials(phone, password);
-          clearChargeMemories();
           setLoggedInUI(phone);
           showAnnouncement();
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
@@ -1455,8 +1454,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       } catch (_) { return null; }
     }
 
-    /* 每次登录后或 token 过期时清空已记忆的站点号/插座号（及充电表单），
-       让用户需要重新输入。金额本身不持久化，随表单一并清空。 */
+    /* 仅在 token 过期需重新登录、或手动退出登录时清空已记忆的站点号/插座号，
+       让用户需要重新输入。由 resetAll() 调用（401 过期与退出登录都会经过）。
+       自动登录（如刷新页面）不清除，保留记忆以便回填。
+       金额本身不持久化，随表单一并清空。 */
     function clearChargeMemories() {
       try { localStorage.removeItem(CHARGE_MEMORY_KEY); } catch (_) { /* ignore */ }
       try { localStorage.removeItem(POWER_MEMORY_KEY); } catch (_) { /* ignore */ }
@@ -1705,9 +1706,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         return false;
       }
 
-      // token有效，进入工作台。自动登录同样视为一次登录，清除历史记忆让用户重新输入。
+      // token有效，进入工作台。自动登录（如刷新页面）不清除记忆，保留站点号/插座号以便回填。
       setLoggedInUI(phone);
-      clearChargeMemories();
       setStatus(verifyStatus, `欢迎回来，${phone} 账号已自动登录。`, 'ok');
       return true;
     }
@@ -1720,6 +1720,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       if (!loggedIn) {
         resetAll();
         fillLoginCredentials();
+      } else {
+        // 自动登录不清除记忆，回填上次的站点号/插座号，无需重新输入
+        fillChargeFromMemory();
       }
     })();
 
