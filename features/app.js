@@ -846,6 +846,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       verifyCooldownUntil = 0;
       verifyInFlight = false;
       clearAuthSession();
+      clearChargeMemories();
       authMode = 'login';
       document.querySelectorAll('.mode-tab').forEach(function(t) {
         t.classList.toggle('active', t.dataset.mode === 'login');
@@ -1174,6 +1175,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           const result = await api('/api/auth', { phone, password, action: 'login' });
           saveAuthSession(phone, result.token || '');
           saveLoginCredentials(phone, password);
+          clearChargeMemories();
           setLoggedInUI(phone);
           showAnnouncement();
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
@@ -1453,6 +1455,21 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       } catch (_) { return null; }
     }
 
+    /* 每次登录后或 token 过期时清空已记忆的站点号/插座号（及充电表单），
+       让用户需要重新输入。金额本身不持久化，随表单一并清空。 */
+    function clearChargeMemories() {
+      try { localStorage.removeItem(CHARGE_MEMORY_KEY); } catch (_) { /* ignore */ }
+      try { localStorage.removeItem(POWER_MEMORY_KEY); } catch (_) { /* ignore */ }
+      try { localStorage.removeItem(ORDER_MEMORY_KEY); } catch (_) { /* ignore */ }
+      fieldGroups.chargeStation.input.value = '';
+      fieldGroups.chargeSid.input.value = '';
+      fieldGroups.chargeAmount.input.value = '';
+      fieldGroups.powerStation.input.value = '';
+      fieldGroups.powerSid.input.value = '';
+      fieldGroups.orderStation.input.value = '';
+      fieldGroups.orderSid.input.value = '';
+    }
+
     /* 充电记忆优先级最高：充电提交时（无论成败）同步覆盖功率和订单的记忆。
        功率/订单随后可单独修改、单独记忆，直到下一次充电提交将其覆盖。 */
     function saveChargeMemory(station, sid) {
@@ -1688,8 +1705,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         return false;
       }
 
-      // token有效，进入工作台
+      // token有效，进入工作台。自动登录同样视为一次登录，清除历史记忆让用户重新输入。
       setLoggedInUI(phone);
+      clearChargeMemories();
       setStatus(verifyStatus, `欢迎回来，${phone} 账号已自动登录。`, 'ok');
       return true;
     }
@@ -1702,8 +1720,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       if (!loggedIn) {
         resetAll();
         fillLoginCredentials();
-      } else {
-        fillChargeFromMemory();
       }
     })();
 

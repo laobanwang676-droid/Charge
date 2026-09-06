@@ -659,15 +659,19 @@
 	</script>
 	<script>
 		(function () {
-			/* 进入地图默认定位到页面底部，让图例与提示说明先可见，再向上浏览地图 */
+			/* 进入地图默认定位到页面底部中间，让图例与提示说明先完整可见，再向上浏览地图 */
 			if ('scrollRestoration' in history) {
 				history.scrollRestoration = 'manual';
 			}
 			function scrollToLegend() {
 				var doc = document.scrollingElement || document.documentElement;
 				var maxTop = doc.scrollHeight - window.innerHeight;
+				var maxLeft = doc.scrollWidth - window.innerWidth;
 				if (maxTop > 0) {
-					window.scrollTo(0, maxTop);
+					/* 垂直滚到底部、水平居中，底部中间的图例可完整露出 */
+					window.scrollTo(maxLeft > 0 ? Math.round(maxLeft / 2) : 0, maxTop);
+				} else if (maxLeft > 0) {
+					window.scrollTo(Math.round(maxLeft / 2), 0);
 				}
 			}
 			if (document.readyState === 'loading') {
