@@ -313,6 +313,25 @@
 				font-size: 12px;
 			}
 		}
+		/* 站点文字下方的空闲数角标 */
+		.site {
+			flex-direction: column;
+		}
+
+		.site .site-free {
+			display: block;
+			flex: none;
+			width: 100%;
+			min-height: 0;
+			margin-top: 2px;
+			color: #1976d2;
+			font-size: 0.85em;
+			font-weight: 900;
+			line-height: 1.05;
+			letter-spacing: 0;
+			text-align: center;
+			white-space: nowrap;
+		}
 	</style>
 </head>
 <body>
@@ -431,6 +450,25 @@
 			}
 			window.location.replace('index.html');
 		}
+	</script>
+	<script>
+		(function () {
+			var rawStates = new URLSearchParams(window.location.search).get('states');
+			if (!rawStates) return;
+			var states = null;
+			try { states = JSON.parse(rawStates); } catch (_) { return; }
+			document.querySelectorAll('.site:not(.empty)').forEach(function (site) {
+				var match = site.textContent.match(/\d+/);
+				var status = match && states[match[0]];
+				if (!status || !status.hasStatus) return;
+				var freeCount = Number(status.availableCount);
+				if (!(freeCount > 0)) return;
+				var badge = document.createElement('span');
+				badge.className = 'site-free';
+				badge.textContent = '空闲数' + freeCount;
+				site.appendChild(badge);
+			});
+		})();
 	</script>
 </body>
 </html>
