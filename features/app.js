@@ -846,7 +846,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       verifyCooldownUntil = 0;
       verifyInFlight = false;
       clearAuthSession();
-      clearChargeMemories();
       authMode = 'login';
       document.querySelectorAll('.mode-tab').forEach(function(t) {
         t.classList.toggle('active', t.dataset.mode === 'login');
@@ -1452,23 +1451,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         if (!raw) return null;
         return JSON.parse(raw);
       } catch (_) { return null; }
-    }
-
-    /* 仅在 token 过期需重新登录、或手动退出登录时清空已记忆的站点号/插座号，
-       让用户需要重新输入。由 resetAll() 调用（401 过期与退出登录都会经过）。
-       自动登录（如刷新页面）不清除，保留记忆以便回填。
-       金额本身不持久化，随表单一并清空。 */
-    function clearChargeMemories() {
-      try { localStorage.removeItem(CHARGE_MEMORY_KEY); } catch (_) { /* ignore */ }
-      try { localStorage.removeItem(POWER_MEMORY_KEY); } catch (_) { /* ignore */ }
-      try { localStorage.removeItem(ORDER_MEMORY_KEY); } catch (_) { /* ignore */ }
-      fieldGroups.chargeStation.input.value = '';
-      fieldGroups.chargeSid.input.value = '';
-      fieldGroups.chargeAmount.input.value = '';
-      fieldGroups.powerStation.input.value = '';
-      fieldGroups.powerSid.input.value = '';
-      fieldGroups.orderStation.input.value = '';
-      fieldGroups.orderSid.input.value = '';
     }
 
     /* 充电记忆优先级最高：充电提交时（无论成败）同步覆盖功率和订单的记忆。
