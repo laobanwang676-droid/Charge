@@ -16,6 +16,11 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const serverText = document.getElementById('server-text');
     const registerCheckOverlay = document.getElementById('register-check-overlay');
     const registerCheckCopy = document.getElementById('register-check-copy');
+    const mapDistributionOpen = document.getElementById('map-distribution-open');
+    const mapDistributionStatus = document.getElementById('map-distribution-status');
+    const mapDistributionSwitches = Array.from(document.querySelectorAll('[data-map-building]'));
+    const authFormPanel = document.getElementById('auth-form-panel');
+    const mapPanel = document.getElementById('map-panel');
     const idleQueryBtn = document.getElementById('idle-query-btn');
     const idleMapBtn = document.getElementById('idle-map-btn');
     const idleResultList = document.getElementById('idle-result-list');
@@ -36,6 +41,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let chargeWarningOpen = false;
     let authMode = 'login';
     let idleSelectedBuilding = '20栋';
+    let mapDistributionSelectedBuilding = '20栋';
     let idleQueryCooldownUntil = 0;
     let idleQueryInFlight = false;
     let idleQueryStatusTimer = null;
@@ -842,6 +848,24 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       openWorkbench();
     }
 
+    function setServerOnlineWidgetVisible(visible) {
+      const serverStatus = document.getElementById('server-status');
+      if (serverStatus) {
+        serverStatus.classList.toggle('hidden', !visible);
+      }
+    }
+
+    function requireLoggedIn() {
+      const session = loadAuthSession();
+      return Boolean(session && session.token);
+    }
+
+    async function runServerHealthCheckIfAuthenticated() {
+      const session = loadAuthSession();
+      if (!session || !session.token) return;
+      await checkServerHealth();
+    }
+
     function resetAll() {
       verifyCooldownUntil = 0;
       verifyInFlight = false;
@@ -870,6 +894,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       setStatus(orderStatus, '可查询最近订单。');
       updateVerifyButtonState();
       switchTab('charge');
+      switchAuthView('login');
+      setServerOnlineWidgetVisible(false);
     }
 
     function switchTab(name) {
@@ -891,39 +917,67 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       renderIdleResult(building);
     }
 
+    function switchAuthView(view) {
+      const showLogin = view === 'login' || view === 'register';
+      if (authFormPanel) authFormPanel.classList.toggle('hidden', view === 'map');
+      if (mapPanel) mapPanel.classList.toggle('hidden', view !== 'map');
+      document.querySelectorAll('.mode-tab').forEach((tab) => {
+        const isActive = tab.dataset.mode === view;
+        tab.classList.toggle('active', isActive);
+      });
+      if (view === 'login') {
+        verifyBtn.textContent = '登录';
+        setStatus(verifyStatus, '未注册请先注册并联系管理员审核通过。');
+        toggleConfirmPasswordField(false);
+      } else if (view === 'register') {
+        verifyBtn.textContent = '注册';
+        setStatus(verifyStatus, '请输入手机号和密码注册。');
+        toggleConfirmPasswordField(true);
+      } else {
+        toggleConfirmPasswordField(false);
+      }
+      clearFieldErrors();
+    }
+
     function updateIdleMapButtonState() {
       if (!idleMapBtn) return;
       idleMapBtn.textContent = `查看${idleSelectedBuilding}地图`;
       idleMapBtn.disabled = !idleMapFiles[idleSelectedBuilding];
     }
 
+    function switchMapDistributionBuilding(building) {
+      if (!idleMapFiles[building]) return;
+      mapDistributionSelectedBuilding = building;
+      mapDistributionSwitches.forEach((button) => {
+        button.classList.toggle('active', button.dataset.mapBuilding === building);
+      });
+      if (mapDistributionOpen) {
+        mapDistributionOpen.textContent = `查看${mapDistributionSelectedBuilding}地图`;
+      }
+    }
+
     function openIdleMapPage() {
       const mapFile = idleMapFiles[idleSelectedBuilding];
       if (!mapFile) return;
-      const areaData = getIdleAreaData(idleSelectedBuilding);
-      const stationStates = {};
-      Object.keys(areaData.siteMap || {}).forEach((siteNumber) => {
-        const sitePayload = areaData.siteMap[siteNumber] || {};
-        const freeSocketNumbers = Array.isArray(sitePayload.sockets)
-          ? sitePayload.sockets
-              .filter((socket) => socket && socket.state === '空闲')
-              .map((socket) => socket.socketNumber)
-          : [];
-        stationStates[siteNumber] = {
-          state: sitePayload.state || '',
-          availableCount: sitePayload.availableCount,
-          freeSocketNumbers,
-          hasStatus: (typeof sitePayload.state === 'string' && sitePayload.state.trim() !== '') || Number.isFinite(sitePayload.availableCount),
-        };
-      });
       try {
         sessionStorage.setItem('charge-map-return', JSON.stringify({ tab: 'idle', building: idleSelectedBuilding }));
         sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
       } catch (_) { /* ignore */ }
-      const mapQuery = Object.keys(stationStates).length > 0
-        ? `?states=${encodeURIComponent(JSON.stringify(stationStates))}`
-        : '';
-      window.location.href = mapFile + mapQuery;
+      window.location.href = mapFile;
+    }
+
+    function openSelectedDistributionMap() {
+      try {
+        sessionStorage.setItem('charge-map-return', JSON.stringify({
+          tab: 'map-distribution',
+          building: mapDistributionSelectedBuilding,
+          scrollY: window.scrollY || 0,
+        }));
+        sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
+      } catch (_) { /* ignore */ }
+      const mapFile = idleMapFiles[mapDistributionSelectedBuilding];
+      if (!mapFile) return;
+      window.location.href = mapFile;
     }
 
     /* 空闲插座：查询按钮点击区域 */
@@ -1175,6 +1229,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           saveAuthSession(phone, result.token || '');
           saveLoginCredentials(phone, password);
           setLoggedInUI(phone);
+          runServerHealthCheckIfAuthenticated();
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
           beginVerifyCooldown(5);
         } catch (error) {
@@ -1615,8 +1670,13 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const initialIdleBuilding = restoredReturnState && restoredReturnState.tab === 'idle' && restoredReturnState.building
       ? restoredReturnState.building
       : '20栋';
+    const initialMapDistributionBuilding = restoredReturnState && restoredReturnState.tab === 'map-distribution' && restoredReturnState.building
+      ? restoredReturnState.building
+      : '20栋';
+    const hasMapReturnState = Boolean(restoredReturnState);
 
     switchIdleBuilding(initialIdleBuilding);
+    switchMapDistributionBuilding(initialMapDistributionBuilding);
 
     if (restoredReturnState && restoredReturnState.tab === 'idle') {
       switchTab('idle');
@@ -1627,10 +1687,20 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           window.requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
         }
       } catch (_) { /* ignore */ }
+    } else if (restoredReturnState && restoredReturnState.tab === 'map-distribution') {
+      switchAuthView('map');
+      if (restoredReturnState.building) switchMapDistributionBuilding(restoredReturnState.building);
+      try {
+        const savedScrollY = Number(sessionStorage.getItem('charge-map-scroll-y'));
+        if (Number.isFinite(savedScrollY) && savedScrollY >= 0) {
+          window.requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+        }
+      } catch (_) { /* ignore */ }
     }
 
     /* ===== 功能3：服务器健康检测 ===== */
     async function checkServerHealth() {
+      setServerOnlineWidgetVisible(true);
       serverDot.className = 'status-dot checking';
       serverText.className = 'status-text checking';
       serverText.textContent = '正在检测...';
@@ -1668,13 +1738,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     document.querySelectorAll('.mode-tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
         authMode = tab.dataset.mode;
-        document.querySelectorAll('.mode-tab').forEach(function(t) {
-          t.classList.toggle('active', t.dataset.mode === authMode);
-        });
-        verifyBtn.textContent = authMode === 'login' ? '登录' : '注册';
-        setStatus(verifyStatus, authMode === 'login' ? '未注册请先注册并联系管理员审核通过。' : '请输入手机号和密码注册。');
-        toggleConfirmPasswordField(authMode === 'register');
-        clearFieldErrors();
+        switchAuthView(authMode);
       });
     });
 
@@ -1689,21 +1753,34 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
       // token有效，进入工作台。自动登录（如刷新页面）不清除记忆，保留站点号/插座号以便回填。
       setLoggedInUI(phone);
+      runServerHealthCheckIfAuthenticated();
       setStatus(verifyStatus, `欢迎回来，${phone} 账号已自动登录。`, 'ok');
       return true;
     }
 
-    /* 页面加载时先检测服务器状态，然后校验token */
-    checkServerHealth();
+    mapDistributionOpen.addEventListener('click', openSelectedDistributionMap);
+    mapDistributionSwitches.forEach((button) => {
+      button.addEventListener('click', function() {
+        switchMapDistributionBuilding(button.dataset.mapBuilding);
+      });
+    });
+
+    switchAuthView('login');
+    setServerOnlineWidgetVisible(false);
 
     (async function init() {
       const loggedIn = await tryAutoLogin();
       if (!loggedIn) {
-        resetAll();
+        if (!restoredReturnState) {
+          resetAll();
+        }
         fillLoginCredentials();
       } else {
         // 自动登录不清除记忆，回填上次的站点号/插座号，无需重新输入
         fillChargeFromMemory();
+        if (!hasMapReturnState) {
+          runServerHealthCheckIfAuthenticated();
+        }
       }
     })();
 

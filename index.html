@@ -15,9 +15,9 @@
         <p class="contact-notice">📱 订单退款和进微信群机器人充电请加微信：<strong id="wx-id">1944505795</strong><button class="copy-btn" id="copy-wx-btn" type="button" title="复制微信号">复制</button></p>
       </div>
       <div class="topbar-actions">
-        <div class="server-status" id="server-status">
-          <span class="status-dot checking" id="server-dot"></span>
-          <span class="status-text checking" id="server-text">正在检测...</span>
+        <div class="server-status hidden" id="server-status">
+          <span class="status-dot" id="server-dot"></span>
+          <span class="status-text" id="server-text"></span>
         </div>
         <span class="logged-user hidden" id="logged-user"></span>
         <button class="theme-toggle logout-icon hidden" id="logout-btn" type="button" title="退出登录">
@@ -57,11 +57,15 @@
 
         <div class="panel-body">
           <div class="verify-card">
-            <div class="mode-tabs" id="mode-tabs">
-              <button class="mode-tab active" data-mode="login" type="button">登录</button>
-              <button class="mode-tab" data-mode="register" type="button">注册</button>
+            <div class="auth-actions-row">
+              <div class="mode-tabs" id="mode-tabs">
+                <button class="mode-tab active" data-mode="login" type="button">登录</button>
+                <button class="mode-tab" data-mode="register" type="button">注册</button>
+                <button class="mode-tab" data-mode="map" type="button">充电区域地图分布</button>
+              </div>
             </div>
-            <div class="form-grid">
+            <div class="auth-panel" id="auth-form-panel">
+              <div class="form-grid">
               <div class="field full">
                 <label for="phone">手机号</label>
                 <input id="phone" maxlength="11" inputmode="numeric" placeholder="请输入 11 位手机号" autocomplete="off" />
@@ -88,11 +92,28 @@
                 <div class="field-error" id="confirm-password-error"></div>
               </div>
             </div>
-            <div class="actions">
+              <div class="actions">
               <button class="btn-primary" id="verify-btn">登录</button>
               <button class="btn-secondary" id="reset-btn" type="button">重置</button>
             </div>
             <div class="notice" id="verify-status">未注册请先注册并联系管理员审核通过。</div>
+            </div>
+
+            <div class="auth-panel hidden" id="map-panel">
+              <div class="map-distribution-shell">
+                <div class="map-distribution-switches" role="tablist" aria-label="区域地图切换">
+                  <button class="map-distribution-switch active" type="button" data-map-building="20栋">20栋</button>
+                  <button class="map-distribution-switch" type="button" data-map-building="19栋">19栋</button>
+                  <button class="map-distribution-switch" type="button" data-map-building="图书馆">图书馆</button>
+                  <button class="map-distribution-switch" type="button" data-map-building="南门">南门</button>
+                </div>
+                <div class="map-distribution-tip">仅展示充电区域充电桩分布图，如果需要：<strong>自助充电</strong>、<strong>显示空闲插座分布</strong>请注册登录。</div>
+                <div class="map-distribution-actions">
+                  <button class="btn-primary" id="map-distribution-open" type="button">查看20栋地图</button>
+                </div>
+                <div class="notice" id="map-distribution-status">请选择区域后查看地图，地图默认显示初始状态。</div>
+              </div>
+            </div>
           </div>
 
           <div class="workbench hidden" id="workbench">
@@ -228,7 +249,7 @@
   <div class="announcement-overlay" id="announcement-overlay">
     <div class="announcement-modal">
       <h3>提示</h3>
-      <p>充电需支付<strong>本金+0.4元代充费</strong>。</p>
+      <p>充电需要先注册并登录，充电需支付<strong>本金+0.4元代充费</strong>。</p>
       <button class="announcement-close" id="announcement-close" type="button">我知道了</button>
     </div>
   </div>
