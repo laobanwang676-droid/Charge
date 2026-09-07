@@ -1237,23 +1237,21 @@
 
     .map-mode-notice {
       width: 100%;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(143, 106, 100, 0.16);
-      background: rgba(255, 255, 255, 0.95);
-      color: #111111;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
       line-height: 1.9;
       font-size: 14px;
       text-align: center;
     }
 
     .map-mode-notice strong {
-      color: #111111;
+      color: var(--text);
       font-weight: 900;
     }
 
-    body.theme-dark .map-mode,
-    body.theme-dark .map-mode-notice {
+    body.theme-dark .map-mode {
       background: rgba(15, 25, 41, 0.82);
       border-color: var(--line);
     }
