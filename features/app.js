@@ -12,6 +12,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const powerStatus = document.getElementById('power-status');
     const orderStatus = document.getElementById('order-status');
     const verifyBadge = document.getElementById('verify-badge');
+    const serverStatus = document.getElementById('server-status');
     const serverDot = document.getElementById('server-dot');
     const serverText = document.getElementById('server-text');
     const registerCheckOverlay = document.getElementById('register-check-overlay');
@@ -47,7 +48,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let authMode = 'login';
     let idleSelectedBuilding = '20栋';
     let mapModeSelectedBuilding = '20栋';
-    let idleQueryCooldownUntil = 0;
+    const IDLE_QUERY_COOLDOWNS_KEY = 'charge-idle-query-cooldowns';
+    const IDLE_AREA_RESPONSE_CACHE_KEY = 'charge-idle-area-response-cache';
+    let idleQueryCooldowns = loadIdleQueryCooldowns();
     let idleQueryInFlight = false;
     let idleQueryStatusTimer = null;
     let idleExpandedSites = new Set();
@@ -59,6 +62,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       '南门': [36, 37, 38, 39, 74, 75, 76, 77, 78, 79],
       '19栋': [40, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72]
     };
+
+    restoreIdleAreaResponseCache();
 
     /* 部分站点实际未安装满 10 个插座：后端仍会按 10 个上报。
        这里限制有效插座数量，23 号与 30 号充电桩实际只有 1-7 号共 7 个插座。 */
@@ -245,8 +250,27 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return idleAreaResponseCache[building] || { siteMap: {}, siteNumbers: [] };
     }
 
+    function restoreIdleAreaResponseCache() {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(IDLE_AREA_RESPONSE_CACHE_KEY) || '{}');
+        Object.keys(idleAreaResponseCache).forEach((building) => {
+          const areaData = saved[building];
+          if (areaData && areaData.siteMap && Array.isArray(areaData.siteNumbers)) {
+            idleAreaResponseCache[building] = areaData;
+          }
+        });
+      } catch (_) { /* ignore */ }
+    }
+
+    function saveIdleAreaResponseCache() {
+      try {
+        sessionStorage.setItem(IDLE_AREA_RESPONSE_CACHE_KEY, JSON.stringify(idleAreaResponseCache));
+      } catch (_) { /* ignore */ }
+    }
+
     function setIdleAreaData(building, payload) {
       idleAreaResponseCache[building] = normalizeIdleAreaResponse(payload);
+      saveIdleAreaResponseCache();
     }
 
     function isIdleAreaResponseValid(payload) {
@@ -516,18 +540,38 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return { state: '空闲', remainingSeconds: null };
     }
 
-    function beginIdleQueryCooldown(seconds = 20) {
-      idleQueryCooldownUntil = Date.now() + seconds * 1000;
+    function loadIdleQueryCooldowns() {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(IDLE_QUERY_COOLDOWNS_KEY) || '{}');
+        const now = Date.now();
+        return Object.fromEntries(
+          Object.entries(saved).filter(([, deadline]) => Number(deadline) > now)
+        );
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function saveIdleQueryCooldowns() {
+      try {
+        sessionStorage.setItem(IDLE_QUERY_COOLDOWNS_KEY, JSON.stringify(idleQueryCooldowns));
+      } catch (_) { /* ignore */ }
+    }
+
+    function getIdleQueryCooldownUntil(building = idleSelectedBuilding) {
+      return Number(idleQueryCooldowns[building]) || 0;
+    }
+
+    function beginIdleQueryCooldown(building, seconds = 15) {
+      idleQueryCooldowns[building] = Date.now() + seconds * 1000;
+      saveIdleQueryCooldowns();
       updateIdleQueryButtonState();
 
       const tick = () => {
-        if (!idleQueryCooldownUntil) {
-          updateIdleQueryButtonState();
-          return;
-        }
-        const remaining = Math.ceil((idleQueryCooldownUntil - Date.now()) / 1000);
+        const remaining = Math.ceil((getIdleQueryCooldownUntil(building) - Date.now()) / 1000);
         if (remaining <= 0) {
-          idleQueryCooldownUntil = 0;
+          delete idleQueryCooldowns[building];
+          saveIdleQueryCooldowns();
           updateIdleQueryButtonState();
           return;
         }
@@ -539,10 +583,12 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function updateIdleQueryButtonState() {
-      const locked = idleQueryInFlight || (idleQueryCooldownUntil && Date.now() < idleQueryCooldownUntil);
       idleButtons.forEach((button) => {
-        button.disabled = Boolean(locked);
+        button.disabled = idleQueryInFlight;
       });
+      if (idleMapBtn) {
+        idleMapBtn.disabled = idleQueryInFlight || !idleMapFiles[idleSelectedBuilding];
+      }
 
       if (!idleQueryBtn) return;
       if (idleQueryInFlight) {
@@ -551,11 +597,17 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         return;
       }
 
-      if (idleQueryCooldownUntil && Date.now() < idleQueryCooldownUntil) {
-        const remaining = Math.ceil((idleQueryCooldownUntil - Date.now()) / 1000);
+      const cooldownUntil = getIdleQueryCooldownUntil();
+      if (cooldownUntil && Date.now() < cooldownUntil) {
+        const remaining = Math.ceil((cooldownUntil - Date.now()) / 1000);
         idleQueryBtn.disabled = true;
         idleQueryBtn.textContent = `请等待 ${remaining}s`;
         return;
+      }
+
+      if (cooldownUntil) {
+        delete idleQueryCooldowns[idleSelectedBuilding];
+        saveIdleQueryCooldowns();
       }
 
       idleQueryBtn.disabled = false;
@@ -890,6 +942,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       verifyCooldownUntil = 0;
       verifyInFlight = false;
       clearAuthSession();
+      serverStatus.classList.add('hidden');
       authMode = 'login';
       document.querySelectorAll('.mode-tab').forEach(function(t) {
         t.classList.toggle('active', t.dataset.mode === 'login');
@@ -962,6 +1015,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         };
       });
       try {
+        saveIdleAreaResponseCache();
         sessionStorage.setItem('charge-map-return', JSON.stringify({ tab: 'idle', building: idleSelectedBuilding }));
         sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
       } catch (_) { /* ignore */ }
@@ -984,17 +1038,18 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     /* 空闲插座：查询按钮点击区域 */
     async function queryIdleSockets() {
       if (idleQueryInFlight) return;
-      if (idleQueryCooldownUntil && Date.now() < idleQueryCooldownUntil) {
+      const cooldownUntil = getIdleQueryCooldownUntil();
+      if (cooldownUntil && Date.now() < cooldownUntil) {
         updateIdleQueryButtonState();
         return;
       }
 
-      const requestPayload = { area: idleSelectedBuilding };
+      const queriedBuilding = idleSelectedBuilding;
+      const requestPayload = { area: queriedBuilding };
       idleQueryInFlight = true;
       updateIdleQueryButtonState();
       clearIdleQueryStatusTimer();
       setIdleQueryNotice('正在查询空闲插座，查询耗时随网络情况波动，请稍候...', '');
-      beginIdleQueryCooldown(20);
 
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), 20000);
@@ -1065,7 +1120,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       } finally {
         window.clearTimeout(timeoutId);
         idleQueryInFlight = false;
-        updateIdleQueryButtonState();
+        beginIdleQueryCooldown(queriedBuilding, 15);
       }
     }
 
@@ -1778,9 +1833,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return true;
     }
 
-    /* 页面加载时先检测服务器状态，然后校验token */
-    checkServerHealth();
-
     (async function init() {
       try {
         if (restoredReturnState && restoredReturnState.tab === 'map') {
@@ -1792,6 +1844,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           const session = loadAuthSession();
           if (session && session.phone) {
             setLoggedInUI(session.phone);
+            serverStatus.classList.remove('hidden');
+            checkServerHealth();
             fillChargeFromMemory();
           } else {
             resetAll();
@@ -1800,11 +1854,20 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           return;
         }
 
+        const session = loadAuthSession();
+        if (!session) {
+          resetAll();
+          fillLoginCredentials();
+          return;
+        }
+
         const loggedIn = await tryAutoLogin();
         if (!loggedIn) {
           resetAll();
           fillLoginCredentials();
         } else {
+          serverStatus.classList.remove('hidden');
+          checkServerHealth();
           // 自动登录不清除记忆，回填上次的站点号/插座号，无需重新输入
           fillChargeFromMemory();
         }
