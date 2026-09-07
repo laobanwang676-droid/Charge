@@ -49,7 +49,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let idleSelectedBuilding = '20栋';
     let mapModeSelectedBuilding = '20栋';
     const IDLE_QUERY_COOLDOWNS_KEY = 'charge-idle-query-cooldowns';
-    const IDLE_AREA_RESPONSE_CACHE_KEY = 'charge-idle-area-response-cache';
     let idleQueryCooldowns = loadIdleQueryCooldowns();
     let idleQueryInFlight = false;
     let idleQueryStatusTimer = null;
@@ -62,8 +61,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       '南门': [36, 37, 38, 39, 74, 75, 76, 77, 78, 79],
       '19栋': [40, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72]
     };
-
-    restoreIdleAreaResponseCache();
 
     /* 部分站点实际未安装满 10 个插座：后端仍会按 10 个上报。
        这里限制有效插座数量，23 号与 30 号充电桩实际只有 1-7 号共 7 个插座。 */
@@ -250,27 +247,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       return idleAreaResponseCache[building] || { siteMap: {}, siteNumbers: [] };
     }
 
-    function restoreIdleAreaResponseCache() {
-      try {
-        const saved = JSON.parse(sessionStorage.getItem(IDLE_AREA_RESPONSE_CACHE_KEY) || '{}');
-        Object.keys(idleAreaResponseCache).forEach((building) => {
-          const areaData = saved[building];
-          if (areaData && areaData.siteMap && Array.isArray(areaData.siteNumbers)) {
-            idleAreaResponseCache[building] = areaData;
-          }
-        });
-      } catch (_) { /* ignore */ }
-    }
-
-    function saveIdleAreaResponseCache() {
-      try {
-        sessionStorage.setItem(IDLE_AREA_RESPONSE_CACHE_KEY, JSON.stringify(idleAreaResponseCache));
-      } catch (_) { /* ignore */ }
-    }
-
     function setIdleAreaData(building, payload) {
       idleAreaResponseCache[building] = normalizeIdleAreaResponse(payload);
-      saveIdleAreaResponseCache();
     }
 
     function isIdleAreaResponseValid(payload) {
@@ -1015,7 +993,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         };
       });
       try {
-        saveIdleAreaResponseCache();
         sessionStorage.setItem('charge-map-return', JSON.stringify({ tab: 'idle', building: idleSelectedBuilding }));
         sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
       } catch (_) { /* ignore */ }
