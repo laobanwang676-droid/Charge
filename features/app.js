@@ -16,12 +16,22 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const serverText = document.getElementById('server-text');
     const registerCheckOverlay = document.getElementById('register-check-overlay');
     const registerCheckCopy = document.getElementById('register-check-copy');
+    const mapModePanel = document.getElementById('map-mode-panel');
+    const mapModeOpenBtn = document.getElementById('map-mode-open-btn');
+    const mapModeTabs = Array.from(document.querySelectorAll('[data-map-mode]'));
     const idleQueryBtn = document.getElementById('idle-query-btn');
     const idleMapBtn = document.getElementById('idle-map-btn');
     const idleResultList = document.getElementById('idle-result-list');
     const idleButtons = Array.from(document.querySelectorAll('[data-idle-building]'));
 
     const idleMapFiles = {
+      '20栋': 'map20.html',
+      '19栋': 'map19.html',
+      '图书馆': 'mapLibrary.html',
+      '南门': 'mapSouth.html',
+    };
+
+    const mapModeFiles = {
       '20栋': 'map20.html',
       '19栋': 'map19.html',
       '图书馆': 'mapLibrary.html',
@@ -36,6 +46,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let chargeWarningOpen = false;
     let authMode = 'login';
     let idleSelectedBuilding = '20栋';
+    let mapModeSelectedBuilding = '20栋';
     let idleQueryCooldownUntil = 0;
     let idleQueryInFlight = false;
     let idleQueryStatusTimer = null;
@@ -842,6 +853,39 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       openWorkbench();
     }
 
+    function setMapMode(building) {
+      mapModeSelectedBuilding = building;
+      mapModeTabs.forEach(function (tab) {
+        tab.classList.toggle('active', tab.dataset.mapMode === building);
+      });
+      if (mapModeOpenBtn) {
+        mapModeOpenBtn.textContent = `查看${building}地图`;
+      }
+    }
+
+    function showMapMode() {
+      authMode = 'map';
+      document.querySelectorAll('.mode-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.mode === 'map');
+      });
+      verifyBtn.textContent = '返回登录';
+      setStatus(verifyStatus, '');
+      verifyStatus.classList.add('hidden');
+      document.querySelector('.form-grid').classList.add('hidden');
+      document.querySelector('.actions').classList.add('hidden');
+      document.getElementById('map-mode-panel').classList.remove('hidden');
+      toggleConfirmPasswordField(false);
+      clearFieldErrors();
+      setMapMode(mapModeSelectedBuilding || '20栋');
+    }
+
+    function hideMapMode() {
+      verifyStatus.classList.remove('hidden');
+      document.querySelector('.form-grid').classList.remove('hidden');
+      document.querySelector('.actions').classList.remove('hidden');
+      document.getElementById('map-mode-panel').classList.add('hidden');
+    }
+
     function resetAll() {
       verifyCooldownUntil = 0;
       verifyInFlight = false;
@@ -858,6 +902,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         setFieldError(group, '');
       });
       toggleConfirmPasswordField(false);
+      hideMapMode();
       const loggedUser = document.getElementById('logged-user');
       loggedUser.textContent = '';
       loggedUser.classList.add('hidden');
@@ -924,6 +969,16 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         ? `?states=${encodeURIComponent(JSON.stringify(stationStates))}`
         : '';
       window.location.href = mapFile + mapQuery;
+    }
+
+    function openPublicMapPage() {
+      const mapFile = mapModeFiles[mapModeSelectedBuilding];
+      if (!mapFile) return;
+      try {
+        sessionStorage.setItem('charge-map-return', JSON.stringify({ tab: 'map', building: mapModeSelectedBuilding }));
+        sessionStorage.setItem('charge-map-scroll-y', String(window.scrollY || 0));
+      } catch (_) { /* ignore */ }
+      window.location.href = mapFile;
     }
 
     /* 空闲插座：查询按钮点击区域 */
@@ -1507,6 +1562,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       idleMapBtn.addEventListener('click', openIdleMapPage);
     }
 
+    if (mapModeOpenBtn) {
+      mapModeOpenBtn.addEventListener('click', openPublicMapPage);
+    }
+
     if (idleResultList) {
       idleResultList.addEventListener('click', function (event) {
         const summary = event.target.closest('.idle-site-summary');
@@ -1615,12 +1674,27 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     const initialIdleBuilding = restoredReturnState && restoredReturnState.tab === 'idle' && restoredReturnState.building
       ? restoredReturnState.building
       : '20栋';
+    const initialMapModeBuilding = restoredReturnState && restoredReturnState.tab === 'map' && restoredReturnState.building
+      ? restoredReturnState.building
+      : '20栋';
 
     switchIdleBuilding(initialIdleBuilding);
+    setMapMode(initialMapModeBuilding);
 
     if (restoredReturnState && restoredReturnState.tab === 'idle') {
       switchTab('idle');
       if (restoredReturnState.building) switchIdleBuilding(restoredReturnState.building);
+      try {
+        const savedScrollY = Number(sessionStorage.getItem('charge-map-scroll-y'));
+        if (Number.isFinite(savedScrollY) && savedScrollY >= 0) {
+          window.requestAnimationFrame(() => window.scrollTo(0, savedScrollY));
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    if (restoredReturnState && restoredReturnState.tab === 'map') {
+      authMode = 'map';
+      showMapMode();
       try {
         const savedScrollY = Number(sessionStorage.getItem('charge-map-scroll-y'));
         if (Number.isFinite(savedScrollY) && savedScrollY >= 0) {
@@ -1671,10 +1745,21 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         document.querySelectorAll('.mode-tab').forEach(function(t) {
           t.classList.toggle('active', t.dataset.mode === authMode);
         });
+        if (authMode === 'map') {
+          showMapMode();
+          return;
+        }
+        hideMapMode();
         verifyBtn.textContent = authMode === 'login' ? '登录' : '注册';
         setStatus(verifyStatus, authMode === 'login' ? '未注册请先注册并联系管理员审核通过。' : '请输入手机号和密码注册。');
         toggleConfirmPasswordField(authMode === 'register');
         clearFieldErrors();
+      });
+    });
+
+    mapModeTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        setMapMode(tab.dataset.mapMode);
       });
     });
 
@@ -1697,13 +1782,34 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     checkServerHealth();
 
     (async function init() {
-      const loggedIn = await tryAutoLogin();
-      if (!loggedIn) {
-        resetAll();
-        fillLoginCredentials();
-      } else {
-        // 自动登录不清除记忆，回填上次的站点号/插座号，无需重新输入
-        fillChargeFromMemory();
+      try {
+        if (restoredReturnState && restoredReturnState.tab === 'map') {
+          fillLoginCredentials();
+          return;
+        }
+
+        if (restoredReturnState && restoredReturnState.tab === 'idle') {
+          const session = loadAuthSession();
+          if (session && session.phone) {
+            setLoggedInUI(session.phone);
+            fillChargeFromMemory();
+          } else {
+            resetAll();
+            fillLoginCredentials();
+          }
+          return;
+        }
+
+        const loggedIn = await tryAutoLogin();
+        if (!loggedIn) {
+          resetAll();
+          fillLoginCredentials();
+        } else {
+          // 自动登录不清除记忆，回填上次的站点号/插座号，无需重新输入
+          fillChargeFromMemory();
+        }
+      } finally {
+        document.documentElement.classList.remove('restoring-map-return');
       }
     })();
 

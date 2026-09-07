@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>校园充电桩控制台</title>
+  <script>
+    try {
+      if (sessionStorage.getItem('charge-map-return')) {
+        document.documentElement.classList.add('restoring-map-return');
+      }
+    } catch (_) { /* ignore */ }
+  </script>
   <link rel="stylesheet" href="ui/style.css" />
 </head>
 <body>
@@ -60,6 +67,7 @@
             <div class="mode-tabs" id="mode-tabs">
               <button class="mode-tab active" data-mode="login" type="button">登录</button>
               <button class="mode-tab" data-mode="register" type="button">注册</button>
+              <button class="mode-tab" data-mode="map" type="button">充电桩分布图</button>
             </div>
             <div class="form-grid">
               <div class="field full">
@@ -93,6 +101,23 @@
               <button class="btn-secondary" id="reset-btn" type="button">重置</button>
             </div>
             <div class="notice" id="verify-status">未注册请先注册并联系管理员审核通过。</div>
+
+            <div class="map-mode hidden" id="map-mode-panel">
+              <div class="idle-switches" role="tablist" aria-label="充电区域地图选择">
+                <button class="idle-switch active" type="button" data-map-mode="20栋">20栋</button>
+                <button class="idle-switch" type="button" data-map-mode="19栋">19栋</button>
+                <button class="idle-switch" type="button" data-map-mode="图书馆">图书馆</button>
+                <button class="idle-switch" type="button" data-map-mode="南门">南门</button>
+              </div>
+
+              <div class="idle-query-actions">
+                <button class="btn-primary" id="map-mode-open-btn" type="button">查看20栋地图</button>
+              </div>
+
+              <div class="map-mode-notice">
+                仅用于查看充电区域地图分布图，若有 <strong>自助充电、查看空闲插座</strong> 的需求请注册登录使用（仅为没有充电权限的同学开放注册）
+              </div>
+            </div>
           </div>
 
           <div class="workbench hidden" id="workbench">

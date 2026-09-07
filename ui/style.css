@@ -412,6 +412,10 @@
       color: var(--danger);
     }
 
+    html.restoring-map-return body {
+      visibility: hidden;
+    }
+
     .workbench {
       display: grid;
       gap: 10px;
@@ -1189,12 +1193,15 @@
 
     .mode-tabs {
       display: inline-flex;
+      width: 100%;
+      justify-content: center;
       gap: 6px;
       padding: 4px;
       border-radius: 12px;
       background: rgba(248, 250, 252, 0.95);
       border: 1px solid var(--line);
-      margin-bottom: 4px;
+      margin-bottom: 0;
+      align-items: center;
     }
 
     .mode-tab {
@@ -1218,6 +1225,40 @@
       border-color: rgba(79, 140, 255, 0.28);
     }
 
+    .map-mode {
+      display: grid;
+      gap: 0;
+      margin-top: -8px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .map-mode-notice {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(143, 106, 100, 0.16);
+      background: rgba(255, 255, 255, 0.95);
+      color: #111111;
+      line-height: 1.9;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .map-mode-notice strong {
+      color: #111111;
+      font-weight: 900;
+    }
+
+    body.theme-dark .map-mode,
+    body.theme-dark .map-mode-notice {
+      background: rgba(15, 25, 41, 0.82);
+      border-color: var(--line);
+    }
+
+
     .logged-user {
       display: inline-flex;
       align-items: center;
@@ -1240,6 +1281,20 @@
     }
 
     body.theme-dark .mode-tab.active {
+      background: rgba(79, 140, 255, 0.25);
+      color: var(--text);
+      border-color: rgba(79, 140, 255, 0.35);
+    }
+
+    body.theme-dark .mode-entry-tab {
+      color: var(--muted);
+    }
+
+    body.theme-dark .mode-entry-tab:hover {
+      color: var(--text);
+    }
+
+    body.theme-dark .mode-entry-tab.active {
       background: rgba(79, 140, 255, 0.25);
       color: var(--text);
       border-color: rgba(79, 140, 255, 0.35);
