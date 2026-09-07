@@ -595,8 +595,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     function setIdleQueryNotice(text, kind = '') {
       if (!idleResultList) return;
       if (!text) return;
-      const noticeClass = kind ? `notice ${kind}` : 'notice';
-      idleResultList.innerHTML = `<div class="${noticeClass} idle-query-notice">${text}</div>`;
+      const notice = document.createElement('div');
+      notice.className = `notice${kind ? ` ${kind}` : ''} idle-query-notice`;
+      notice.textContent = text;
+      idleResultList.replaceChildren(notice);
     }
 
     function clearIdleQueryStatusTimer() {
@@ -781,7 +783,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       document.getElementById('logout-btn').classList.add('hidden');
     }
 
-    /* ===== 7天登录持久化 ===== */
+    /* ===== 24小时登录持久化 ===== */
     const AUTH_STORAGE_KEY = 'charge-auth-session';
     const LOGIN_CREDENTIALS_KEY = 'charge-login-credentials';
     const AUTH_VALIDITY_MS = 24 * 60 * 60 * 1000;
@@ -808,10 +810,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
     function clearAuthSession() {
       try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) { /* ignore */ }
-    }
-
-    function clearLoginCredentials() {
-      try { localStorage.removeItem(LOGIN_CREDENTIALS_KEY); } catch (_) { /* ignore */ }
     }
 
     function saveLoginCredentials(phone, password) {
@@ -1262,6 +1260,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           saveAuthSession(phone, result.token || '');
           saveLoginCredentials(phone, password);
           setLoggedInUI(phone);
+          serverStatus.classList.remove('hidden');
+          checkServerHealth();
           setStatus(verifyStatus, `${result.message || '登录成功'}\n手机号：${phone}`, 'ok');
           beginVerifyCooldown(5);
         } catch (error) {
