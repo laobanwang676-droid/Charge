@@ -917,6 +917,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       document.querySelector('.form-grid').classList.remove('hidden');
       document.querySelector('.actions').classList.remove('hidden');
       document.getElementById('map-mode-panel').classList.add('hidden');
+      fillLoginCredentials();
     }
 
     function resetAll() {
