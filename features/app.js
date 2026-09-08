@@ -433,6 +433,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       node.textContent = text;
     }
 
+    function setVerifyStatus(text) {
+      verifyStatus.textContent = text;
+    }
+
     function setFieldError(group, message) {
       group.input.classList.toggle('invalid', Boolean(message));
       group.error.textContent = message || '';
@@ -897,7 +901,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         t.classList.toggle('active', t.dataset.mode === 'map');
       });
       verifyBtn.textContent = '返回登录';
-      setStatus(verifyStatus, '');
+      verifyStatus.className = '';
+      verifyStatus.textContent = '';
       verifyStatus.classList.add('hidden');
       document.querySelector('.form-grid').classList.add('hidden');
       document.querySelector('.actions').classList.add('hidden');
@@ -938,7 +943,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       closeWorkbench();
       document.querySelector('.verify-card').classList.remove('hidden');
       document.getElementById('sidebar-notes').classList.add('hidden');
-      setStatus(verifyStatus, '未注册请先注册并联系管理员审核通过。');
+      setVerifyStatus('未注册请先注册并联系管理员审核通过。');
       setStatus(chargeStatus, '可在这里发起充电请求。');
       setStatus(powerStatus, '可查询当前功率。');
       setStatus(orderStatus, '可查询最近订单。');
@@ -1783,7 +1788,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         }
         hideMapMode();
         verifyBtn.textContent = authMode === 'login' ? '登录' : '注册';
-        setStatus(verifyStatus, authMode === 'login' ? '未注册请先注册并联系管理员审核通过。' : '请输入手机号和密码注册。');
+        setVerifyStatus(authMode === 'login' ? '未注册请先注册并联系管理员审核通过。' : '请输入手机号和密码注册。');
         toggleConfirmPasswordField(authMode === 'register');
         clearFieldErrors();
       });
@@ -1857,7 +1862,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     document.getElementById('logout-btn').addEventListener('click', async function() {
       var logoutBtn = this;
       logoutBtn.disabled = true;
-      logoutBtn.textContent = '退出中...';
       try {
         await api('/api/logout', {});
       } catch (_) {
@@ -1866,7 +1870,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       resetAll();
       fillLoginCredentials();
       logoutBtn.disabled = false;
-      logoutBtn.textContent = '← 返回登录';
     });
 
     document.getElementById('copy-wx-btn').addEventListener('click', function() {

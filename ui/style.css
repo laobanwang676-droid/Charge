@@ -904,6 +904,12 @@
       color: var(--text);
     }
 
+    .arrow-icon {
+      width: 19px;
+      height: 19px;
+      color: var(--text);
+    }
+
     body.theme-dark .theme-toggle {
       background: rgba(15, 25, 41, 0.85);
       border-color: rgba(148, 163, 184, 0.35);
@@ -1193,7 +1199,9 @@
 
     .mode-tabs {
       display: inline-flex;
-      width: 100%;
+      width: fit-content;
+      max-width: 100%;
+      justify-self: center;
       justify-content: center;
       gap: 6px;
       padding: 4px;
