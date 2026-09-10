@@ -768,7 +768,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
       if (response.status === 401) {
         resetAll();
-        showAnnouncement();
         throw new Error('登录已过期，请重新登录');
       }
 
@@ -1493,17 +1492,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       if (e.target === chargeWarningOverlay) closeChargeWarning(false);
     });
 
-    /* ===== 公告弹窗（刷新 / token失效时提示） ===== */
-    const announcementOverlay = document.getElementById('announcement-overlay');
-
-    function showAnnouncement() {
-      announcementOverlay.classList.add('show');
-    }
-
-    function closeAnnouncement() {
-      announcementOverlay.classList.remove('show');
-    }
-
     function showRegisterCheck() {
       registerCheckOverlay.classList.add('show');
     }
@@ -1512,10 +1500,6 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       registerCheckOverlay.classList.remove('show');
     }
 
-    document.getElementById('announcement-close').addEventListener('click', closeAnnouncement);
-    announcementOverlay.addEventListener('click', function (e) {
-      if (e.target === announcementOverlay) closeAnnouncement();
-    });
     document.getElementById('register-check-close').addEventListener('click', closeRegisterCheck);
     registerCheckOverlay.addEventListener('click', function (e) {
       if (e.target === registerCheckOverlay) closeRegisterCheck();
