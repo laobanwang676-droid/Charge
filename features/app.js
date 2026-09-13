@@ -766,9 +766,12 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         payload = {};
       }
 
-      if (response.status === 401) {
-        resetAll();
-        throw new Error('登录已过期，请重新登录');
+      if (response.status === 401 && path !== '/api/auth') {
+        /* 登录失效：退回登录页、回填账号密码，并在登录区显示文字提示 */
+        handleSessionExpired();
+        const error = new Error(SESSION_EXPIRED_MESSAGE);
+        error.sessionExpired = true;
+        throw error;
       }
 
       if (!response.ok) {
@@ -918,6 +921,16 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       document.querySelector('.actions').classList.remove('hidden');
       document.getElementById('map-mode-panel').classList.add('hidden');
       if (restoreCredentials) fillLoginCredentials();
+    }
+
+    /* ===== 登录失效：退回登录页，回填账号密码并给出文字提示 ===== */
+    const SESSION_EXPIRED_MESSAGE = '登录已过期，请重新登录';
+
+    function handleSessionExpired() {
+      resetAll();
+      /* resetAll 默认不清空后不回填，这里显式回填上次登录的账号密码 */
+      fillLoginCredentials();
+      setStatus(verifyStatus, SESSION_EXPIRED_MESSAGE, 'err');
     }
 
     function resetAll() {
@@ -1327,6 +1340,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         /* 功能1：充电成功后弹窗提醒付款 */
         showPayReminder(station_num, sid, amount);
       } catch (error) {
+        /* 登录失效已在登录区提示，避免把过期文案写进工作台通知 */
+        if (error.sessionExpired) return;
         if (error.message.includes('操作太快') || error.message.includes('请求过于频繁')) {
           const match = error.message.match(/(\d+)\s*秒/);
           if (match) {
@@ -1360,6 +1375,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         const result = await api('/api/power', { station_num, sid });
         setStatus(powerStatus, result.message, 'ok');
       } catch (error) {
+        if (error.sessionExpired) return;
         setStatus(powerStatus, error.message, 'err');
       }
     }
@@ -1382,6 +1398,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         const result = await api('/api/order', { station_num, sid });
         setStatus(orderStatus, result.message, 'ok');
       } catch (error) {
+        if (error.sessionExpired) return;
         setStatus(orderStatus, error.message, 'err');
       }
     }
