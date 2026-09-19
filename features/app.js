@@ -958,7 +958,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       document.querySelector('.verify-card').classList.remove('hidden');
       document.getElementById('sidebar-notes').classList.add('hidden');
       setVerifyStatus('未注册请先注册并联系管理员审核通过。');
-      setStatus(chargeStatus, '可在这里发起充电请求。');
+      setStatus(chargeStatus, '请确保插头插好再点击开始充电。');
       setStatus(powerStatus, '可查询当前功率。');
       setStatus(orderStatus, '可查询最近订单。');
       updateVerifyButtonState();
