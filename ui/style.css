@@ -422,22 +422,35 @@
       margin-top: 12px;
     }
 
+    .workbench-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .tabs {
       display: inline-flex;
-      gap: 6px;
-      padding: 4px;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 3px;
       border-radius: 12px;
       background: rgba(248, 250, 252, 0.95);
       border: 1px solid var(--line);
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      max-width: 100%;
     }
 
     .tab {
-      padding: 8px 12px;
+      padding: 7px 10px;
       border-radius: 10px;
       background: transparent;
       color: var(--muted);
       border: 1px solid transparent;
+      white-space: nowrap;
+      font-size: 13px;
+      line-height: 1.2;
+      flex: 0 0 auto;
     }
 
     .tab.active {
