@@ -1,4 +1,7 @@
-const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
+const API_BASE = 'https://13tf0xc173771.vicp.fun';
+
+/* 后端不在线（网络失败 / 超时未响应 / 返回非 JSON）时的统一提示，避免暴露 "Failed to fetch" 等浏览器原始报错 */
+const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
 
     const verifyBtn = document.getElementById('verify-btn');
     const resetBtn = document.getElementById('reset-btn');
@@ -44,6 +47,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let verifyInFlight = false;
     let chargeCooldownUntil = 0;
     let chargeInFlight = false;
+    let powerInFlight = false;
+    let orderInFlight = false;
     let chargeWarningOpen = false;
     let authMode = 'login';
     let idleSelectedBuilding = '20栋';
@@ -53,6 +58,8 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     let idleQueryInFlight = false;
     let idleQueryStatusTimer = null;
     let idleExpandedSites = new Set();
+    const workbenchTabs = Array.from(document.querySelectorAll('.tabs [data-tab]'));
+    const workbenchTabsRoot = document.querySelector('.tabs');
 
     /* 空闲插座：楼栋静态站点数据区域 */
     const idleBuildingData = {
@@ -444,7 +451,40 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function setButtonLocked(button, locked) {
+      if (!button) return;
       button.disabled = locked;
+    }
+
+    function isWorkbenchRequestInFlight() {
+      return Boolean(chargeInFlight || powerInFlight || orderInFlight || idleQueryInFlight);
+    }
+
+    function getActiveWorkbenchRequestLabel() {
+      if (chargeInFlight) return '充电请求';
+      if (powerInFlight) return '功率查询';
+      if (orderInFlight) return '订单查询';
+      if (idleQueryInFlight) return '空闲插座查询';
+      return '当前请求';
+    }
+
+    function updateWorkbenchRequestLock() {
+      const locked = isWorkbenchRequestInFlight();
+      if (workbenchTabsRoot) {
+        workbenchTabsRoot.classList.toggle('request-locked', locked);
+      }
+      workbenchTabs.forEach((tab) => {
+        const isActive = tab.classList.contains('active');
+        tab.disabled = locked && !isActive;
+        tab.setAttribute('aria-disabled', String(locked && !isActive));
+        tab.title = locked && !isActive
+          ? `${getActiveWorkbenchRequestLabel()}进行中，请稍候再切换`
+          : '';
+      });
+
+      updateChargeButtonState();
+      updatePowerButtonState();
+      updateOrderButtonState();
+      updateIdleQueryButtonState();
     }
 
     function applyTheme(mode) {
@@ -566,17 +606,24 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function updateIdleQueryButtonState() {
+      const requestLocked = isWorkbenchRequestInFlight() && !idleQueryInFlight;
       idleButtons.forEach((button) => {
-        button.disabled = idleQueryInFlight;
+        button.disabled = idleQueryInFlight || requestLocked;
       });
       if (idleMapBtn) {
-        idleMapBtn.disabled = idleQueryInFlight || !idleMapFiles[idleSelectedBuilding];
+        idleMapBtn.disabled = idleQueryInFlight || requestLocked || !idleMapFiles[idleSelectedBuilding];
       }
 
       if (!idleQueryBtn) return;
       if (idleQueryInFlight) {
         idleQueryBtn.disabled = true;
         idleQueryBtn.textContent = '查询中...';
+        return;
+      }
+
+      if (requestLocked) {
+        idleQueryBtn.disabled = true;
+        idleQueryBtn.textContent = `查询${idleSelectedBuilding}空闲插座`;
         return;
       }
 
@@ -677,6 +724,11 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         chargeBtn.textContent = '提交中...';
         return;
       }
+      if (isWorkbenchRequestInFlight()) {
+        setButtonLocked(chargeBtn, true);
+        chargeBtn.textContent = '开始充电';
+        return;
+      }
       if (chargeCooldownUntil && Date.now() < chargeCooldownUntil) {
         setButtonLocked(chargeBtn, true);
         const remaining = Math.ceil((chargeCooldownUntil - Date.now()) / 1000);
@@ -685,6 +737,38 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       }
       setButtonLocked(chargeBtn, false);
       chargeBtn.textContent = '开始充电';
+    }
+
+    function updatePowerButtonState() {
+      if (!powerBtn) return;
+      if (powerInFlight) {
+        setButtonLocked(powerBtn, true);
+        powerBtn.textContent = '查询中...';
+        return;
+      }
+      if (isWorkbenchRequestInFlight()) {
+        setButtonLocked(powerBtn, true);
+        powerBtn.textContent = '查询功率';
+        return;
+      }
+      setButtonLocked(powerBtn, false);
+      powerBtn.textContent = '查询功率';
+    }
+
+    function updateOrderButtonState() {
+      if (!orderBtn) return;
+      if (orderInFlight) {
+        setButtonLocked(orderBtn, true);
+        orderBtn.textContent = '查询中...';
+        return;
+      }
+      if (isWorkbenchRequestInFlight()) {
+        setButtonLocked(orderBtn, true);
+        orderBtn.textContent = '查询订单';
+        return;
+      }
+      setButtonLocked(orderBtn, false);
+      orderBtn.textContent = '查询订单';
     }
 
     function clearFieldErrors() {
@@ -757,7 +841,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
           body: JSON.stringify(data),
         });
       } catch (_) {
-        throw new Error('服务器繁忙，请使用群聊机器人充电');
+        throw new Error(SERVICE_BUSY_MESSAGE);
       }
       let payload = {};
       try {
@@ -775,7 +859,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       }
 
       if (!response.ok) {
-        throw new Error(payload.message || '服务器繁忙，请使用群聊机器人充电');
+        throw new Error(payload.message || SERVICE_BUSY_MESSAGE);
       }
       return payload;
     }
@@ -936,6 +1020,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     function resetAll() {
       verifyCooldownUntil = 0;
       verifyInFlight = false;
+      chargeInFlight = false;
+      powerInFlight = false;
+      orderInFlight = false;
+      idleQueryInFlight = false;
       clearAuthSession();
       serverStatus.classList.add('hidden');
       authMode = 'login';
@@ -962,19 +1050,40 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       setStatus(powerStatus, '可查询当前功率。');
       setStatus(orderStatus, '可查询最近订单。');
       updateVerifyButtonState();
-      switchTab('charge');
+      switchTab('charge', { force: true });
+      updateWorkbenchRequestLock();
     }
 
-    function switchTab(name) {
+    function switchTab(name, options = {}) {
+      const force = Boolean(options.force);
+      const activeTab = document.querySelector('.tab.active');
+      const currentName = activeTab ? activeTab.dataset.tab : '';
+      if (!force && name !== currentName && isWorkbenchRequestInFlight()) {
+        const message = `${getActiveWorkbenchRequestLabel()}进行中，请稍候再切换页面。`;
+        if (currentName === 'power') {
+          setStatus(powerStatus, message, 'err');
+        } else if (currentName === 'order') {
+          setStatus(orderStatus, message, 'err');
+        } else if (currentName === 'charge') {
+          setStatus(chargeStatus, message, 'err');
+        }
+        return false;
+      }
+
       document.querySelectorAll('.tab').forEach((tab) => {
         tab.classList.toggle('active', tab.dataset.tab === name);
       });
       document.querySelectorAll('.tab-panel').forEach((panel) => {
         panel.classList.toggle('active', panel.id === `tab-${name}`);
       });
+      updateWorkbenchRequestLock();
+      return true;
     }
 
     function switchIdleBuilding(building) {
+      if (building !== idleSelectedBuilding && isWorkbenchRequestInFlight()) {
+        return false;
+      }
       idleSelectedBuilding = building;
       idleButtons.forEach((button) => {
         button.classList.toggle('active', button.dataset.idleBuilding === building);
@@ -982,6 +1091,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       updateIdleQueryButtonState();
       updateIdleMapButtonState();
       renderIdleResult(building);
+      return true;
     }
 
     function updateIdleMapButtonState() {
@@ -991,6 +1101,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function openIdleMapPage() {
+      if (isWorkbenchRequestInFlight()) {
+        setIdleQueryNotice(`${getActiveWorkbenchRequestLabel()}进行中，请稍候再查看地图。`, 'err');
+        return;
+      }
       const mapFile = idleMapFiles[idleSelectedBuilding];
       if (!mapFile) return;
       const areaData = getIdleAreaData(idleSelectedBuilding);
@@ -1032,6 +1146,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     /* 空闲插座：查询按钮点击区域 */
     async function queryIdleSockets() {
       if (idleQueryInFlight) return;
+      if (isWorkbenchRequestInFlight()) {
+        setIdleQueryNotice(`${getActiveWorkbenchRequestLabel()}进行中，请稍候再查询。`, 'err');
+        return;
+      }
       const cooldownUntil = getIdleQueryCooldownUntil();
       if (cooldownUntil && Date.now() < cooldownUntil) {
         updateIdleQueryButtonState();
@@ -1041,7 +1159,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       const queriedBuilding = idleSelectedBuilding;
       const requestPayload = { area: queriedBuilding };
       idleQueryInFlight = true;
-      updateIdleQueryButtonState();
+      updateWorkbenchRequestLock();
       clearIdleQueryStatusTimer();
       setIdleQueryNotice('正在查询空闲插座，查询耗时随网络情况波动，请稍候...', '');
 
@@ -1067,11 +1185,20 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         try {
           result = await response.json();
         } catch (_) {
-          throw new Error('数据解析错误');
+          /* 响应不是合法 JSON（后端不在线时常见：网关页/静态兜底页），按后端不可达处理 */
+          result = null;
         }
 
         if (!response.ok) {
-          throw new Error(result && result.message ? result.message : '服务暂时不可用');
+          /* 后端有响应但不正常：优先展示后端返回的 message，没有则统一提示 */
+          const serverMessage = result && result.message;
+          const serverError = new Error(serverMessage || SERVICE_BUSY_MESSAGE);
+          if (serverMessage) serverError.fromServer = true;
+          throw serverError;
+        }
+
+        if (!result || typeof result !== 'object') {
+          throw new Error(SERVICE_BUSY_MESSAGE);
         }
 
         if (result && Number(result.normal) === -10) {
@@ -1103,9 +1230,15 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         renderIdleResult(idleSelectedBuilding);
         clearIdleQueryStatusTimer();
       } catch (error) {
-        const message = error && error.name === 'AbortError'
-          ? '服务器未响应'
-          : (error && error.message ? error.message : '服务暂时不可用');
+        /* 只有后端明确返回的 message 才原样展示；网络失败/超时/非 JSON 一律统一提示，
+           避免把 "Failed to fetch" 这类浏览器原始报错暴露给用户 */
+        const rawMessage = error && error.message ? String(error.message) : '';
+        const message = (error && error.fromServer && rawMessage)
+          ? rawMessage
+          : SERVICE_BUSY_MESSAGE;
+        if (!(error && error.fromServer)) {
+          console.warn('[idle-query] 查询未获得后端正常响应，已使用统一提示', error);
+        }
         clearIdleQueryStatusTimer();
         const emptyResult = { siteMap: {}, siteNumbers: idleBuildingData[idleSelectedBuilding] || [], isValid: false };
         idleAreaResponseCache[idleSelectedBuilding] = emptyResult;
@@ -1115,6 +1248,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         window.clearTimeout(timeoutId);
         idleQueryInFlight = false;
         beginIdleQueryCooldown(queriedBuilding, 15);
+        updateWorkbenchRequestLock();
       }
     }
 
@@ -1307,6 +1441,10 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
         setStatus(chargeStatus, '充电请求正在处理中，请不要重复点击。', 'err');
         return;
       }
+      if (isWorkbenchRequestInFlight()) {
+        setStatus(chargeStatus, `${getActiveWorkbenchRequestLabel()}进行中，请稍候再操作。`, 'err');
+        return;
+      }
       if (chargeCooldownUntil && Date.now() < chargeCooldownUntil) {
         const remaining = formatSeconds((chargeCooldownUntil - Date.now()) / 1000);
         setStatus(chargeStatus, `操作太快，请 ${remaining} 秒后再试。`, 'err');
@@ -1332,7 +1470,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
       setStatus(chargeStatus, '正在提交充电请求...');
       chargeInFlight = true;
-      updateChargeButtonState();
+      updateWorkbenchRequestLock();
       try {
         const result = await api('/api/charge', { station_num, sid, amount });
         setStatus(chargeStatus, result.message, 'ok');
@@ -1353,12 +1491,20 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       }
       finally {
         chargeInFlight = false;
-        updateChargeButtonState();
+        updateWorkbenchRequestLock();
       }
     }
 
     async function queryPowerAction() {
       clearFieldErrors();
+      if (powerInFlight) {
+        setStatus(powerStatus, '功率查询正在处理中，请不要重复点击。', 'err');
+        return;
+      }
+      if (isWorkbenchRequestInFlight()) {
+        setStatus(powerStatus, `${getActiveWorkbenchRequestLabel()}进行中，请稍候再查询。`, 'err');
+        return;
+      }
       if (!validateQueryForm('power')) {
         setStatus(powerStatus, '请先修正查询信息中的数字格式。', 'err');
         return;
@@ -1371,17 +1517,30 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       savePowerMemory(station_num, sid);
 
       setStatus(powerStatus, '正在查询功率...');
+      powerInFlight = true;
+      updateWorkbenchRequestLock();
       try {
         const result = await api('/api/power', { station_num, sid });
         setStatus(powerStatus, result.message, 'ok');
       } catch (error) {
         if (error.sessionExpired) return;
         setStatus(powerStatus, error.message, 'err');
+      } finally {
+        powerInFlight = false;
+        updateWorkbenchRequestLock();
       }
     }
 
     async function queryOrderAction() {
       clearFieldErrors();
+      if (orderInFlight) {
+        setStatus(orderStatus, '订单查询正在处理中，请不要重复点击。', 'err');
+        return;
+      }
+      if (isWorkbenchRequestInFlight()) {
+        setStatus(orderStatus, `${getActiveWorkbenchRequestLabel()}进行中，请稍候再查询。`, 'err');
+        return;
+      }
       if (!validateQueryForm('order')) {
         setStatus(orderStatus, '请先修正查询信息中的数字格式。', 'err');
         return;
@@ -1394,12 +1553,17 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       saveOrderMemory(station_num, sid);
 
       setStatus(orderStatus, '正在查询订单...');
+      orderInFlight = true;
+      updateWorkbenchRequestLock();
       try {
         const result = await api('/api/order', { station_num, sid });
         setStatus(orderStatus, result.message, 'ok');
       } catch (error) {
         if (error.sessionExpired) return;
         setStatus(orderStatus, error.message, 'err');
+      } finally {
+        orderInFlight = false;
+        updateWorkbenchRequestLock();
       }
     }
 
@@ -1486,6 +1650,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function confirmChargeWarning(message) {
+      if (!chargeWarningOverlay || !chargeWarningMessage) {
+        return Promise.resolve(window.confirm(message));
+      }
       chargeWarningOpen = true;
       chargeWarningMessage.textContent = message;
       chargeWarningOverlay.classList.add('show');
@@ -1495,7 +1662,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     }
 
     function closeChargeWarning(shouldContinue) {
-      chargeWarningOverlay.classList.remove('show');
+      if (chargeWarningOverlay) {
+        chargeWarningOverlay.classList.remove('show');
+      }
       chargeWarningOpen = false;
       if (chargeWarningResolve) {
         chargeWarningResolve(shouldContinue);
@@ -1503,29 +1672,81 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
       }
     }
 
-    chargeWarningCancel.addEventListener('click', () => closeChargeWarning(false));
-    chargeWarningContinue.addEventListener('click', () => closeChargeWarning(true));
-    chargeWarningOverlay.addEventListener('click', function (e) {
-      if (e.target === chargeWarningOverlay) closeChargeWarning(false);
-    });
+    if (chargeWarningCancel) {
+      chargeWarningCancel.addEventListener('click', () => closeChargeWarning(false));
+    }
+    if (chargeWarningContinue) {
+      chargeWarningContinue.addEventListener('click', () => closeChargeWarning(true));
+    }
+    if (chargeWarningOverlay) {
+      chargeWarningOverlay.addEventListener('click', function (e) {
+        if (e.target === chargeWarningOverlay) closeChargeWarning(false);
+      });
+    }
 
     function showRegisterCheck() {
+      if (!registerCheckOverlay) return;
       registerCheckOverlay.classList.add('show');
     }
 
     function closeRegisterCheck() {
+      if (!registerCheckOverlay) return;
       registerCheckOverlay.classList.remove('show');
     }
 
-    document.getElementById('register-check-close').addEventListener('click', closeRegisterCheck);
-    registerCheckOverlay.addEventListener('click', function (e) {
-      if (e.target === registerCheckOverlay) closeRegisterCheck();
-    });
-    registerCheckCopy.addEventListener('click', function() {
-      navigator.clipboard.writeText('1944505795').then(function() {
-        registerCheckCopy.textContent = '已复制';
-        setTimeout(function() { registerCheckCopy.textContent = '复制'; }, 1500);
+    const registerCheckClose = document.getElementById('register-check-close');
+    if (registerCheckClose) {
+      registerCheckClose.addEventListener('click', closeRegisterCheck);
+    }
+    if (registerCheckOverlay) {
+      registerCheckOverlay.addEventListener('click', function (e) {
+        if (e.target === registerCheckOverlay) closeRegisterCheck();
       });
+    }
+    if (registerCheckCopy) {
+      registerCheckCopy.addEventListener('click', function() {
+        navigator.clipboard.writeText('1944505795').then(function() {
+          registerCheckCopy.textContent = '已复制';
+          setTimeout(function() { registerCheckCopy.textContent = '复制'; }, 1500);
+        });
+      });
+    }
+
+    /* ===== 充电教学图片预览 ===== */
+    const teachPreviewOverlay = document.getElementById('teach-preview-overlay');
+    const teachPreviewImage = document.getElementById('teach-preview-image');
+    const teachPreviewClose = document.getElementById('teach-preview-close');
+
+    function showTeachPreview(src) {
+      if (!teachPreviewOverlay || !teachPreviewImage || !src) return;
+      teachPreviewImage.src = src;
+      teachPreviewOverlay.classList.add('show');
+    }
+
+    function closeTeachPreview() {
+      if (!teachPreviewOverlay || !teachPreviewImage) return;
+      teachPreviewOverlay.classList.remove('show');
+      teachPreviewImage.removeAttribute('src');
+    }
+
+    document.querySelectorAll('[data-teach-image]').forEach((button) => {
+      button.addEventListener('click', function () {
+        showTeachPreview(button.dataset.teachImage);
+      });
+    });
+    if (teachPreviewClose) {
+      teachPreviewClose.addEventListener('click', closeTeachPreview);
+    }
+    if (teachPreviewOverlay) {
+      teachPreviewOverlay.addEventListener('click', function (e) {
+        if (e.target === teachPreviewOverlay) closeTeachPreview();
+      });
+    }
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      if (teachPreviewOverlay && teachPreviewOverlay.classList.contains('show')) {
+        closeTeachPreview();
+      }
     });
 
     /* ===== 功能2：站点号/插座号 三表独立记忆与复用 ===== */
@@ -1581,7 +1802,9 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
     document.querySelectorAll('.tab').forEach((tab) => {
       tab.addEventListener('click', function () {
-        switchTab(tab.dataset.tab);
+        if (tab.disabled) return;
+        const switched = switchTab(tab.dataset.tab);
+        if (!switched) return;
         if (tab.dataset.tab === 'charge') fillChargeFromMemory();
         if (tab.dataset.tab === 'power') fillPowerFromMemory();
         if (tab.dataset.tab === 'order') fillOrderFromMemory();
@@ -1590,6 +1813,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
 
     idleButtons.forEach((button) => {
       button.addEventListener('click', function () {
+        if (button.disabled) return;
         switchIdleBuilding(button.dataset.idleBuilding);
       });
     });
@@ -1722,7 +1946,7 @@ const API_BASE = 'https://7b048004d78a4e86aa4c7f1eb2dfab31.hn.takin.cc';
     setMapMode(initialMapModeBuilding);
 
     if (restoredReturnState && restoredReturnState.tab === 'idle') {
-      switchTab('idle');
+      switchTab('idle', { force: true });
       if (restoredReturnState.building) switchIdleBuilding(restoredReturnState.building);
       try {
         const savedScrollY = Number(sessionStorage.getItem('charge-map-scroll-y'));

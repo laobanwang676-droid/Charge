@@ -446,6 +446,16 @@
       border-color: rgba(79, 140, 255, 0.28);
     }
 
+    .tab:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .tabs.request-locked {
+      position: relative;
+    }
+
     .tab-panels {
       display: grid;
       gap: 14px;
@@ -786,7 +796,8 @@
       margin-top: 14px;
     }
 
-    .list-item {
+    .list-item,
+    .notice-item {
       padding: 13px 14px;
       border-radius: 14px;
       border: 1px solid var(--line);
@@ -794,6 +805,24 @@
       color: var(--text);
       line-height: 1.65;
       font-size: 13px;
+    }
+
+    .notice-card {
+      text-align: center;
+    }
+
+    .notice-card-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .notice-card-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
     }
 
     .hidden { display: none !important; }
@@ -912,7 +941,8 @@
 
     body.theme-dark .theme-toggle {
       background: rgba(15, 25, 41, 0.85);
-      border-color: rgba(148, 163, 184, 0.35);
+      border-color: rgba(148, ,
+    body.theme-dark .notice-item163, 184, 0.35);
     }
 
     body.theme-dark .theme-toggle:hover {
@@ -947,9 +977,11 @@
     }
 
     body.theme-dark .field label,
-    body.theme-dark .panel-title .sub,
+    body.theme-dark .notice-card-subtitle,
     body.theme-dark .helper,
     body.theme-dark .metric .label,
+    body.theme-dark .list-item,
+    body.theme-dark .noticeic .label,
     body.theme-dark .list-item,
     body.theme-dark .brand p {
       color: var(--muted);
@@ -1184,6 +1216,116 @@
       background: rgba(37, 99, 235, 0.18);
       border-color: rgba(37, 99, 235, 0.4);
       opacity: 1;
+    }
+
+    .teach-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .teach-panel-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .teach-panel-subtitle {
+      margin-top: -4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .teach-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .teach-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(248, 250, 252, 0.95);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .teach-image-btn {
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: zoom-in;
+    }
+
+    .teach-image {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(248, 250, 252, 0.95);
+    }
+
+    .teach-preview-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.82);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .teach-preview-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .teach-preview-image {
+      max-width: min(920px, 100%);
+      max-height: calc(100vh - 64px);
+      border-radius: 12px;
+      object-fit: contain;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .teach-preview-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    body.theme-dark .teach-item {
+      background: rgba(15, 25, 41, 0.88);
+      color: var(--muted);
+    }
+
+    body.theme-dark .teach-panel-subtitle,
+    body.theme-dark .teach-item {
+      color: var(--muted);
+    }
+
+    body.theme-dark .teach-image {
+      background: rgba(15, 25, 41, 0.88);
     }
 
     body.theme-dark .announcement-copy {

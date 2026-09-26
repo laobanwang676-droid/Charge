@@ -124,6 +124,7 @@
               <button class="tab" data-tab="power">功率查询</button>
               <button class="tab" data-tab="order">订单查询</button>
               <button class="tab" data-tab="idle">空闲插座</button>
+              <button class="tab" data-tab="teach">充电教学</button>
               </div>
             </div>
 
@@ -210,24 +211,42 @@
                 <div class="idle-result-list" id="idle-result-list">
                 </div>
               </section>
+
+              <section class="tab-panel" id="tab-teach">
+                <div class="teach-panel">
+                  <div class="teach-panel-title">充电教学</div>
+                  <div class="teach-panel-subtitle">按步骤了解如何找到插座并完成充电</div>
+                  <div class="teach-list">
+                    <div class="teach-item">1. 学校有四个充电桩区域，如“空闲插座”页的地图所示，可选择就近区域进行充电。</div>
+                    <div class="teach-item">2. 每个区域有不同数量的“充电站点”，如图一个电表箱就对应一个站点，每个站点有10个插座。</div>
+                    <button class="teach-image-btn" type="button" data-teach-image="images/zd.jpg" aria-label="查看充电站点示例图">
+                      <img class="teach-image" src="images/zd.jpg" alt="充电站点示例：一个电表箱对应一个站点" loading="lazy" />
+                    </button>
+                    <div class="teach-item">3. 如图所示，每个插座旁边有一个二维码，可以进行扫码充电，但没有权限的同学请看下一条。</div>
+                    <button class="teach-image-btn" type="button" data-teach-image="images/ewm.jpg" aria-label="查看插座二维码示例图">
+                      <img class="teach-image" src="images/ewm.jpg" alt="插座二维码示例" loading="lazy" />
+                    </button>
+                    <div class="teach-item">4. 无权限可通过本网页，通过输入插座号进行充电：二维码下方有两个数字，第一个为站点号，第二个为该站点的插座号。</div>
+                    <div class="teach-item">5. 登录后，在“充电”功能页依次输入这两个数字和金额，再点击开始充电即可；支付成功但没充上请看右侧注意事项。</div>
+                    <div class="teach-item">6. 还支持群聊机器人自助充电，直接按格式发群里即可自动充电，进群联系页面上方微信。</div>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
         </div>
       </section>
 
       <aside class="sidebar hidden" id="sidebar-notes">
-        <section class="sidebar-card">
-          <div class="panel-title">
-            <div>
-              <h2>注意事项</h2>
-              <div class="sub">请在使用前仔细阅读。</div>
-            </div>
-          </div>
+        <section class="sidebar-card notice-card">
+          <div class="notice-card-title">注意事项</div>
+          <div class="notice-card-subtitle">请在使用前仔细阅读</div>
           <div class="list">
-            <div class="list-item">1. 学校有四个充电桩①十二教靠近图书馆的门口 ②二十栋宿舍楼下 ③南门旁边靠近三食堂 ④19栋宿舍（背后）和第二运动场之间</div>
-            <div class="list-item">2. 二维码下面有插座号，00:00-7:00会断电不能进行充电，学校只支持充电器功率＜300瓦。</div>
-            <div class="list-item">3. 代充费0.4元/次，请添加顶部微信转账，支付成功后需支付本金+0.4元。</div>
-            <div class="list-item">4. 支付成功但未充上，可以查询功率，低于50瓦就是充电器有问题或者换个插座。已结束可以查询订单看结束原因。</div>
+            <div class="notice-item">1. 代充费 0.4 元/次，请添加顶部微信转账，支付成功后需支付本金 + 0.4 元。</div>
+            <div class="notice-item">2. 为预防火灾 00:00 - 07:00 学校会断电不能进行充电，且不计时，恢复后自动续充。</div>
+            <div class="notice-item">3. 支付成功但需要以充电器是否工作为准，比如充电器亮红灯才正常，充上了还是绿灯可以查询功率；低于50瓦通常是充电器有问题，可以换一个插座试一下验证。</div>
+            <div class="notice-item">4. 如果查询功率显示没有进行中订单，就是自己断开了，可以查询订单，看结束原因，如果是“空载”，可能没插好或者插座有问题，换一个再试试。</div>
+            <div class="notice-item">5. 学校只支持充电器功率小于 300 瓦，超过会自动断开，结束原因为“过载”。</div>
           </div>
         </section>
       </aside>
@@ -265,6 +284,12 @@
         <button class="announcement-close" id="charge-warning-continue" type="button">继续充电</button>
       </div>
     </div>
+  </div>
+
+  <!-- 教学图片预览 -->
+  <div class="teach-preview-overlay" id="teach-preview-overlay">
+    <button class="teach-preview-close" id="teach-preview-close" type="button" aria-label="关闭图片预览">×</button>
+    <img class="teach-preview-image" id="teach-preview-image" alt="教学图片预览" />
   </div>
 
   <script src="features/app.js"></script>
