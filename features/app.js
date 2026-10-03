@@ -464,6 +464,70 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       button.disabled = locked;
     }
 
+    /* 弹窗打开时锁定页面滚动，避免背景跟随滑动导致画面撕裂 */
+    let pageScrollLockCount = 0;
+    let pageScrollLockY = 0;
+
+    function lockPageScroll() {
+      pageScrollLockCount += 1;
+      if (pageScrollLockCount > 1) return;
+      pageScrollLockY = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const body = document.body;
+      body.style.position = 'fixed';
+      body.style.top = `-${pageScrollLockY}px`;
+      body.style.left = '0';
+      body.style.right = '0';
+      body.style.width = '100%';
+      body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    }
+
+    function unlockPageScroll() {
+      if (pageScrollLockCount === 0) return;
+      pageScrollLockCount -= 1;
+      if (pageScrollLockCount > 0) return;
+      const body = document.body;
+      body.style.position = '';
+      body.style.top = '';
+      body.style.left = '';
+      body.style.right = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      window.scrollTo(0, pageScrollLockY);
+    }
+
+    /* 点击弹窗外的遮罩或弹窗内任意位置都能关闭；按住拖动（滑动）时不误关 */
+    function bindTapToClose(overlay, closeFn) {
+      if (!overlay) return;
+      let startX = 0;
+      let startY = 0;
+      let pending = false;
+      overlay.addEventListener('pointerdown', function (event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        pending = true;
+        startX = event.clientX;
+        startY = event.clientY;
+      });
+      overlay.addEventListener('pointercancel', function () {
+        pending = false;
+      });
+      overlay.addEventListener('click', function (event) {
+        const isBackdrop = event.target === overlay;
+        const hadPointer = pending;
+        const moved = hadPointer && (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8);
+        pending = false;
+        /* 点遮罩（弹窗外）一定关闭 */
+        if (isBackdrop) {
+          closeFn(event);
+          return;
+        }
+        /* 点弹窗内：需要是轻点而非拖动 */
+        if (!hadPointer || moved) return;
+        closeFn(event);
+      });
+    }
+
     function isWorkbenchRequestInFlight() {
       return Boolean(chargeInFlight || powerInFlight || orderInFlight || idleQueryInFlight || powerChartInFlight);
     }
@@ -1655,15 +1719,19 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     function openPowerChart(index) {
       if (!powerChartOverlay) return;
       powerChartOverlay.dataset.index = String(index);
+      const wasHidden = !powerChartOverlay.classList.contains('show');
       powerChartOverlay.classList.add('show');
+      if (wasHidden) lockPageScroll();
     }
 
     function closePowerChart(force) {
       if (powerChartInFlight && !force) return;
       if (!powerChartOverlay) return;
+      const wasVisible = powerChartOverlay.classList.contains('show');
       powerChartOverlay.classList.remove('show');
       powerChartOverlay.dataset.index = '';
       setPowerChartStatus('', '');
+      if (wasVisible) unlockPageScroll();
     }
 
     function parseChartTime(value) {
@@ -1946,7 +2014,9 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       payModalSid.textContent = station + '-' + sid;
       payModalAmount.textContent = (Number(amount) + 0.4).toFixed(1);
       setPayModalButtonState(true, payModalDefaultText + '（3s）');
+      const wasHidden = !payOverlay.classList.contains('show');
       payOverlay.classList.add('show');
+      if (wasHidden) lockPageScroll();
 
       let remainingSeconds = 3;
       payModalCountdownInterval = window.setInterval(function () {
@@ -1968,13 +2038,13 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     function closePayReminder() {
       clearPayModalCooldown();
       setPayModalButtonState(false, payModalDefaultText);
+      if (!payOverlay.classList.contains('show')) return;
       payOverlay.classList.remove('show');
+      unlockPageScroll();
     }
 
     payModalClose.addEventListener('click', closePayReminder);
-    payOverlay.addEventListener('click', function (e) {
-      if (e.target === payOverlay) closePayReminder();
-    });
+    bindTapToClose(payOverlay, closePayReminder);
 
     function getChargeWarningMessage(station, sid) {
       if (station === '11' && (sid === '7' || sid === '4')) {
@@ -2197,11 +2267,7 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     if (powerChartClose) {
       powerChartClose.addEventListener('click', closePowerChart);
     }
-    if (powerChartOverlay) {
-      powerChartOverlay.addEventListener('click', (event) => {
-        if (event.target === powerChartOverlay) closePowerChart();
-      });
-    }
+    bindTapToClose(powerChartOverlay, () => closePowerChart());
 
     fieldGroups.phone.input.addEventListener('input', () => setFieldError(fieldGroups.phone, ''));
     fieldGroups.password.input.addEventListener('input', () => setFieldError(fieldGroups.password, ''));
