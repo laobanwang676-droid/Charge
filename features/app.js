@@ -14,6 +14,12 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     const chargeStatus = document.getElementById('charge-status');
     const powerStatus = document.getElementById('power-status');
     const orderStatus = document.getElementById('order-status');
+    const orderResultList = document.getElementById('order-result-list');
+    const powerChartOverlay = document.getElementById('power-chart-overlay');
+    const powerChartStatus = document.getElementById('power-chart-status');
+    const powerChartCanvas = document.getElementById('power-chart-canvas');
+    const powerChartNote = document.getElementById('power-chart-note');
+    const powerChartClose = document.getElementById('power-chart-close');
     const verifyBadge = document.getElementById('verify-badge');
     const serverStatus = document.getElementById('server-status');
     const serverDot = document.getElementById('server-dot');
@@ -49,6 +55,9 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     let chargeInFlight = false;
     let powerInFlight = false;
     let orderInFlight = false;
+    let powerChartInFlight = false;
+    let orderBlocks = [];
+    const powerChartCache = {};
     let chargeWarningOpen = false;
     let authMode = 'login';
     let idleSelectedBuilding = '20栋';
@@ -456,13 +465,14 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     }
 
     function isWorkbenchRequestInFlight() {
-      return Boolean(chargeInFlight || powerInFlight || orderInFlight || idleQueryInFlight);
+      return Boolean(chargeInFlight || powerInFlight || orderInFlight || idleQueryInFlight || powerChartInFlight);
     }
 
     function getActiveWorkbenchRequestLabel() {
       if (chargeInFlight) return '充电请求';
       if (powerInFlight) return '功率查询';
       if (orderInFlight) return '订单查询';
+      if (powerChartInFlight) return '功率图查询';
       if (idleQueryInFlight) return '空闲插座查询';
       return '当前请求';
     }
@@ -485,6 +495,7 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       updatePowerButtonState();
       updateOrderButtonState();
       updateIdleQueryButtonState();
+      updateOrderChartButtons();
     }
 
     function applyTheme(mode) {
@@ -771,6 +782,21 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       orderBtn.textContent = '查询订单';
     }
 
+    function updateOrderChartButtons() {
+      if (!orderResultList) return;
+      const locked = orderInFlight || powerChartInFlight || isWorkbenchRequestInFlight();
+      orderResultList.querySelectorAll('.order-chart-button').forEach((button) => {
+        const index = Number(button.dataset.index);
+        const loadingThis = powerChartInFlight && Number(powerChartOverlay?.dataset.index) === index;
+        button.disabled = locked;
+        button.classList.toggle('locked', locked);
+        button.textContent = loadingThis ? '查询中...' : '查看充电功率图';
+      });
+      if (powerChartClose) {
+        powerChartClose.disabled = powerChartInFlight;
+      }
+    }
+
     function clearFieldErrors() {
       Object.values(fieldGroups).forEach((group) => setFieldError(group, ''));
     }
@@ -1023,6 +1049,7 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       chargeInFlight = false;
       powerInFlight = false;
       orderInFlight = false;
+      powerChartInFlight = false;
       idleQueryInFlight = false;
       clearAuthSession();
       serverStatus.classList.add('hidden');
@@ -1049,6 +1076,8 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       setStatus(chargeStatus, '请确保插头插好再点击开始充电。');
       setStatus(powerStatus, '可查询当前功率。');
       setStatus(orderStatus, '可查询最近订单。');
+      clearOrderBlocks();
+      closePowerChart(true);
       updateVerifyButtonState();
       switchTab('charge', { force: true });
       updateWorkbenchRequestLock();
@@ -1531,6 +1560,310 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       }
     }
 
+    function parseOrderBlocks(message) {
+      if (typeof message !== 'string' || !message.trim()) return [];
+      const text = message.replace(/\r/g, '').trim();
+      const marker = /\n(?=\s*(?:第\s*\d+\s*笔|订单\s*\d+|【\s*订单\s*\d+|已完成：))/g;
+      const indexes = [0];
+      let match;
+      while ((match = marker.exec(text))) indexes.push(match.index + 1);
+      indexes.push(text.length);
+      const blocks = [];
+      for (let index = 0; index < indexes.length - 1; index += 1) {
+        const block = text.slice(indexes[index], indexes[index + 1]).trim();
+        if (block) blocks.push(block);
+      }
+      const timePattern = /开始时间\s*[：:]/g;
+      if (blocks.length <= 1 && (text.match(timePattern) || []).length > 1) {
+        return text.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean);
+      }
+      return blocks.length ? blocks : [text];
+    }
+
+    function parseOrderContext(block, fallback) {
+      if (typeof block !== 'string') return null;
+      const socketMatch = block.match(/插座\s*[：:]\s*(\d+)\s*[-－]\s*(\d+)/);
+      const startMatch = block.match(/开始时间\s*[：:]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
+      const endMatch = block.match(/结束时间\s*[：:]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
+      const station = socketMatch ? socketMatch[1] : (fallback && fallback.station) || '';
+      const sid = socketMatch ? socketMatch[2] : (fallback && fallback.sid) || '';
+      if (!station || !sid || !startMatch || !endMatch) return null;
+      const startTime = startMatch[1].replace(/\s+/g, ' ');
+      const endTime = endMatch[1].replace(/\s+/g, ' ');
+      const start = new Date(startTime.replace(/-/g, '/')).getTime();
+      const end = new Date(endTime.replace(/-/g, '/')).getTime();
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+      return {
+        station,
+        sid,
+        startTime,
+        endTime,
+        durationMinutes: Math.floor((end - start) / 60000),
+      };
+    }
+
+    function buildOrderBlocks(message, fallback) {
+      return parseOrderBlocks(message).map((text) => ({
+        text,
+        context: parseOrderContext(text, fallback),
+      })).filter((item) => item.context).map((item, index) => Object.assign({ index }, item));
+    }
+
+    function clearOrderBlocks() {
+      orderBlocks = [];
+      if (orderResultList) orderResultList.innerHTML = '';
+    }
+
+    function renderOrderBlocks(blocks) {
+      orderBlocks = Array.isArray(blocks) ? blocks : [];
+      if (!orderResultList) return;
+      orderResultList.innerHTML = '';
+      orderBlocks.forEach((item) => {
+        const block = document.createElement('div');
+        block.className = 'order-block';
+
+        const notice = document.createElement('div');
+        notice.className = 'notice ok';
+        notice.textContent = item.text;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'order-chart-button';
+        button.dataset.index = String(item.index);
+        button.textContent = '查看充电功率图';
+        button.addEventListener('click', () => viewPowerChart(item.index));
+
+        block.appendChild(notice);
+        block.appendChild(button);
+        orderResultList.appendChild(block);
+      });
+      updateOrderChartButtons();
+    }
+
+    function powerChartCacheKey(context) {
+      return [context.station, context.sid, context.startTime, context.endTime, 'v2'].join('|');
+    }
+
+    function setPowerChartStatus(status, type) {
+      if (!powerChartStatus) return;
+      powerChartStatus.textContent = status || '';
+      powerChartStatus.className = 'power-chart-status' + (type ? ` ${type}` : '');
+      if (powerChartCanvas) powerChartCanvas.classList.remove('show');
+      if (powerChartNote) powerChartNote.classList.remove('show');
+    }
+
+    function openPowerChart(index) {
+      if (!powerChartOverlay) return;
+      powerChartOverlay.dataset.index = String(index);
+      powerChartOverlay.classList.add('show');
+    }
+
+    function closePowerChart(force) {
+      if (powerChartInFlight && !force) return;
+      if (!powerChartOverlay) return;
+      powerChartOverlay.classList.remove('show');
+      powerChartOverlay.dataset.index = '';
+      setPowerChartStatus('', '');
+    }
+
+    function parseChartTime(value) {
+      const text = String(value).trim().replace('T', ' ').replace(/-/g, '/');
+      const time = new Date(text).getTime();
+      return Number.isFinite(time) ? time : 0;
+    }
+
+    function formatChartTime(value) {
+      const text = String(value).replace('T', ' ');
+      return text.length >= 16 ? text.slice(11, 16) : text;
+    }
+
+    function samplePowerPoints(points, minutes) {
+      if (points.length <= 2) return points;
+      const interval = minutes * 60000;
+      const sampled = [points[0]];
+      let lastTime = parseChartTime(points[0].time);
+      points.slice(1, -1).forEach((point) => {
+        const time = parseChartTime(point.time);
+        if (!lastTime || !time || time - lastTime >= interval) {
+          sampled.push(point);
+          lastTime = time || lastTime;
+        }
+      });
+      sampled.push(points[points.length - 1]);
+      return sampled;
+    }
+
+    function parsePowerPoints(payload) {
+      let source = payload;
+      if (typeof source === 'string') {
+        try { source = JSON.parse(source); } catch (_) { return []; }
+      }
+      if (source && typeof source === 'object' && !Array.isArray(source)) {
+        source = source.list || source.data || source.rows || source.result || source;
+      }
+      const points = [];
+      const timeKeys = ['date', 'time', 'timestamp', 'dataTime', 'collectTime', 'createTime', 'recordTime', 'dateTime'];
+      const powerKeys = ['power', 'value', 'watt', 'watts', 'powerValue', 'electricPower', 'P'];
+      const visit = (value) => {
+        if (Array.isArray(value)) {
+          value.forEach(visit);
+          return;
+        }
+        if (!value || typeof value !== 'object') return;
+        const timeKey = timeKeys.find((key) => value[key] !== undefined && value[key] !== null && value[key] !== '');
+        const powerKey = powerKeys.find((key) => value[key] !== undefined && value[key] !== null && value[key] !== '');
+        let time = timeKey ? String(value[timeKey]).trim() : '';
+        let power = powerKey ? Number(value[powerKey]) : NaN;
+        if (value.chargeInfoString) {
+          let chargeInfo = value.chargeInfoString;
+          if (typeof chargeInfo === 'string') {
+            try { chargeInfo = JSON.parse(chargeInfo); } catch (_) { chargeInfo = null; }
+          }
+          if (chargeInfo && typeof chargeInfo === 'object' && chargeInfo.P !== undefined && chargeInfo.P !== null && chargeInfo.P !== '') {
+            power = Number(chargeInfo.P);
+          }
+        }
+        if (time && Number.isFinite(power)) points.push({ time, power });
+        Object.keys(value).forEach((key) => {
+          if (key === 'chargeInfoString') return;
+          if (value[key] && typeof value[key] === 'object') visit(value[key]);
+        });
+      };
+      visit(source);
+      const unique = {};
+      const sorted = points.filter((point) => {
+        const key = point.time + '|' + point.power;
+        if (unique[key]) return false;
+        unique[key] = true;
+        return true;
+      }).sort((left, right) => parseChartTime(left.time) - parseChartTime(right.time));
+      return samplePowerPoints(sorted, 20);
+    }
+
+    function drawPowerChart(points) {
+      if (!powerChartCanvas) return false;
+      const context = powerChartCanvas.getContext('2d');
+      if (!context) return false;
+      const ratio = window.devicePixelRatio || 1;
+      const cssWidth = Math.max(280, Math.floor(powerChartCanvas.clientWidth || 480));
+      const cssHeight = Math.max(210, Math.round(cssWidth * 0.62));
+      powerChartCanvas.width = Math.round(cssWidth * ratio);
+      powerChartCanvas.height = Math.round(cssHeight * ratio);
+      powerChartCanvas.style.height = cssHeight + 'px';
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.clearRect(0, 0, cssWidth, cssHeight);
+
+      const padding = { left: 58, right: 16, top: 16, bottom: 30 };
+      const plotWidth = cssWidth - padding.left - padding.right;
+      const plotHeight = cssHeight - padding.top - padding.bottom;
+      const maxPower = Math.max(100, ...points.map((point) => point.power));
+      const x = (index) => padding.left + (points.length === 1 ? plotWidth / 2 : index * plotWidth / (points.length - 1));
+      const y = (power) => padding.top + plotHeight - power / maxPower * plotHeight;
+
+      context.font = '12px sans-serif';
+      context.textAlign = 'right';
+      context.textBaseline = 'middle';
+      context.strokeStyle = '#e1e7ee';
+      context.fillStyle = '#526176';
+      context.lineWidth = 1;
+      for (let index = 0; index <= 4; index += 1) {
+        const value = maxPower * index / 4;
+        const lineY = y(value);
+        context.beginPath();
+        context.moveTo(padding.left, lineY);
+        context.lineTo(cssWidth - padding.right, lineY);
+        context.stroke();
+        context.fillText(Math.round(value) + 'W', padding.left - 8, lineY);
+      }
+
+      context.textBaseline = 'top';
+      const labelIndexes = points.length > 6
+        ? [0, Math.floor((points.length - 1) / 2), points.length - 1]
+        : points.map((_, index) => index);
+      labelIndexes.forEach((index) => {
+        if (points.length === 1 || (index > 0 && index < points.length - 1)) context.textAlign = 'center';
+        else context.textAlign = index === 0 ? 'left' : 'right';
+        context.fillText(formatChartTime(points[index].time), x(index), cssHeight - padding.bottom + 8);
+      });
+
+      context.strokeStyle = '#2869aa';
+      context.lineWidth = 2;
+      context.lineJoin = 'round';
+      context.lineCap = 'round';
+      context.beginPath();
+      points.forEach((point, index) => {
+        if (index) context.lineTo(x(index), y(point.power));
+        else context.moveTo(x(index), y(point.power));
+      });
+      context.stroke();
+      context.fillStyle = '#2869aa';
+      points.forEach((point, index) => {
+        context.beginPath();
+        context.arc(x(index), y(point.power), 3, 0, Math.PI * 2);
+        context.fill();
+      });
+
+      powerChartCanvas.classList.add('show');
+      if (powerChartNote) powerChartNote.classList.add('show');
+      if (powerChartStatus) {
+        powerChartStatus.textContent = '';
+        powerChartStatus.className = 'power-chart-status';
+      }
+      return true;
+    }
+
+    async function viewPowerChart(index) {
+      if (orderInFlight || powerChartInFlight) return;
+      const selected = orderBlocks[index];
+      const context = selected && selected.context;
+      openPowerChart(index);
+      if (!context) {
+        setPowerChartStatus('这笔订单缺少有效的开始时间或结束时间，暂时无法生成功率图', 'error');
+        return;
+      }
+      if (context.durationMinutes <= 20) {
+        setPowerChartStatus('这笔订单持续时间不足 20 分钟，暂无可用的功率数据图', 'error');
+        return;
+      }
+
+      const cacheKey = powerChartCacheKey(context);
+      if (powerChartCache[cacheKey]) {
+        setPowerChartStatus('', '');
+        drawPowerChart(powerChartCache[cacheKey]);
+        return;
+      }
+
+      setPowerChartStatus('正在获取功率数据...', 'loading');
+      powerChartInFlight = true;
+      updateWorkbenchRequestLock();
+      try {
+        const payload = await api('/api/order/power-chart', {
+          station_num: context.station,
+          sid: context.sid,
+          startTime: context.startTime,
+          endTime: context.endTime,
+        });
+        const points = parsePowerPoints(payload && (payload.data !== undefined ? payload.data : payload));
+        if (!points.length) {
+          setPowerChartStatus('当前时间段没有可用的功率数据', 'error');
+          return;
+        }
+        powerChartCache[cacheKey] = points;
+        if (!drawPowerChart(points)) {
+          setPowerChartStatus('功率图生成失败，请稍后重试', 'error');
+        }
+      } catch (error) {
+        if (error.sessionExpired) {
+          closePowerChart(true);
+          return;
+        }
+        setPowerChartStatus(error.message || '功率数据请求失败，请稍后重试', 'error');
+      } finally {
+        powerChartInFlight = false;
+        updateWorkbenchRequestLock();
+      }
+    }
+
     async function queryOrderAction() {
       clearFieldErrors();
       if (orderInFlight) {
@@ -1552,14 +1885,24 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
       /* 功能2：无论查询成功与否，都记住订单查询的站点号和插座号 */
       saveOrderMemory(station_num, sid);
 
+      clearOrderBlocks();
+      closePowerChart();
       setStatus(orderStatus, '正在查询订单...');
       orderInFlight = true;
       updateWorkbenchRequestLock();
       try {
         const result = await api('/api/order', { station_num, sid });
-        setStatus(orderStatus, result.message, 'ok');
+        const blocks = buildOrderBlocks(result.message || '', { station: station_num, sid });
+        if (blocks.length) {
+          orderStatus.className = 'notice hidden';
+          orderStatus.textContent = '';
+          renderOrderBlocks(blocks);
+        } else {
+          setStatus(orderStatus, result.message || '暂无订单数据', 'ok');
+        }
       } catch (error) {
         if (error.sessionExpired) return;
+        clearOrderBlocks();
         setStatus(orderStatus, error.message, 'err');
       } finally {
         orderInFlight = false;
@@ -1850,6 +2193,15 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     chargeBtn.addEventListener('click', startCharge);
     powerBtn.addEventListener('click', queryPowerAction);
     orderBtn.addEventListener('click', queryOrderAction);
+
+    if (powerChartClose) {
+      powerChartClose.addEventListener('click', closePowerChart);
+    }
+    if (powerChartOverlay) {
+      powerChartOverlay.addEventListener('click', (event) => {
+        if (event.target === powerChartOverlay) closePowerChart();
+      });
+    }
 
     fieldGroups.phone.input.addEventListener('input', () => setFieldError(fieldGroups.phone, ''));
     fieldGroups.password.input.addEventListener('input', () => setFieldError(fieldGroups.password, ''));

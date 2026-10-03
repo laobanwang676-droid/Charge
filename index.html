@@ -190,6 +190,7 @@
                   <button class="btn-primary" id="order-btn">查询订单</button>
                 </div>
                 <div class="notice" id="order-status" style="margin-top: 12px;">可查询指定插座最近订单。</div>
+                <div class="order-result-list" id="order-result-list"></div>
                 <div class="helper">显示最近48h内完成的订单信息。</div>
               </section>
 
@@ -290,6 +291,18 @@
   <div class="teach-preview-overlay" id="teach-preview-overlay">
     <button class="teach-preview-close" id="teach-preview-close" type="button" aria-label="关闭图片预览">×</button>
     <img class="teach-preview-image" id="teach-preview-image" alt="教学图片预览" />
+  </div>
+
+  <!-- 充电功率图弹窗 -->
+  <div class="power-chart-overlay" id="power-chart-overlay">
+    <div class="power-chart-modal" id="power-chart-modal">
+      <div class="power-chart-title">充电功率图</div>
+      <div class="power-chart-status" id="power-chart-status"></div>
+      <canvas class="power-chart-canvas" id="power-chart-canvas"></canvas>
+      <div class="power-chart-note" id="power-chart-note">若功率缓慢降至0-50w区间后断开就是充电器充满变绿灯了，
+具体断开功率由不同充电器决定。</div>
+      <button class="power-chart-close" id="power-chart-close" type="button">关闭</button>
+    </div>
   </div>
 
   <script src="features/app.js"></script>
