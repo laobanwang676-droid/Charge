@@ -1,4 +1,4 @@
-const API_BASE = 'https://13tf0xc173771.vicp.fun';
+const API_BASE = window.CHARGE_API_BASE;
 
 /* 后端不在线（网络失败 / 超时未响应 / 返回非 JSON）时的统一提示，避免暴露 "Failed to fetch" 等浏览器原始报错 */
 const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
@@ -940,6 +940,11 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
         payload = {};
       }
 
+      if (response.status === 403 && payload.is_admin === true) {
+        window.location.replace('admin.html');
+        throw new Error('管理员账号请使用管理页面');
+      }
+
       if (response.status === 401 && path !== '/api/auth') {
         /* 登录失效：退回登录页、回填账号密码，并在登录区显示文字提示 */
         handleSessionExpired();
@@ -969,9 +974,9 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     const LOGIN_CREDENTIALS_KEY = 'charge-login-credentials';
     const AUTH_VALIDITY_MS = 24 * 60 * 60 * 1000;
 
-    function saveAuthSession(phone, token) {
+    function saveAuthSession(phone, token, isAdmin = false) {
       try {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ phone: phone, token: token || '', loginTime: Date.now() }));
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ phone: phone, token: token || '', loginTime: Date.now(), is_admin: isAdmin === true }));
       } catch (_) { /* ignore */ }
     }
 
@@ -1043,7 +1048,7 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
         // session有效：HTTP 200 且 payload.valid === true
         // session无效/过期：HTTP 401 或 payload.valid === false
         if (response.ok && payload.valid === true) {
-          return payload.phone || null;
+          return payload.phone ? payload : null;
         }
         return null;
       } catch (_) {
@@ -1503,7 +1508,12 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
         setStatus(verifyStatus, '正在登录...');
         try {
           const result = await api('/api/auth', { phone, password, action: 'login' });
-          saveAuthSession(phone, result.token || '');
+          saveAuthSession(phone, result.token || '', result.is_admin === true);
+          if (result.is_admin === true) {
+            try { localStorage.removeItem(LOGIN_CREDENTIALS_KEY); } catch (_) { /* ignore */ }
+            window.location.replace('admin.html');
+            return;
+          }
           saveLoginCredentials(phone, password);
           setLoggedInUI(phone);
           serverStatus.classList.remove('hidden');
@@ -2448,10 +2458,21 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
     /* ===== 自动登录 ===== */
     async function tryAutoLogin() {
       setStatus(verifyStatus, '正在校验登录状态...');
-      const phone = await validateToken();
-      if (!phone) {
+      const verified = await validateToken();
+      if (!verified) {
         clearAuthSession();
         return false;
+      }
+      const phone = verified.phone;
+      const session = loadAuthSession();
+      if (session) {
+        session.phone = phone;
+        session.is_admin = verified.is_admin === true;
+        try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session)); } catch (_) { /* ignore */ }
+      }
+      if (verified.is_admin === true) {
+        window.location.replace('admin.html');
+        return true;
       }
 
       // token有效，进入工作台。自动登录（如刷新页面）不清除记忆，保留站点号/插座号以便回填。
@@ -2469,8 +2490,7 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
 
         if (restoredReturnState && restoredReturnState.tab === 'idle') {
           const session = loadAuthSession();
-          if (session && session.phone) {
-            setLoggedInUI(session.phone);
+          if (session && session.phone && await tryAutoLogin()) {
             serverStatus.classList.remove('hidden');
             checkServerHealth();
             fillChargeFromMemory();
