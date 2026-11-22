@@ -43,7 +43,7 @@
       </div>
     </header>
 
-    <div class="notice admin-notice" id="admin-status" role="status" aria-live="polite">正在验证管理员身份…</div>
+    <div class="notice admin-notice admin-loading" id="admin-status" role="status" aria-live="polite" aria-atomic="true">正在验证管理员身份…</div>
 
     <main id="admin-main" class="hidden">
       <div class="admin-overview" aria-label="管理概览">
@@ -53,11 +53,11 @@
       </div>
 
       <nav class="admin-tabs" role="tablist" aria-label="管理员功能">
-        <button class="active" id="tab-pending" data-admin-tab="pending" role="tab" aria-selected="true" aria-controls="panel-pending">待审核账号</button>
-        <button id="tab-records" data-admin-tab="records" role="tab" aria-selected="false" aria-controls="panel-records" tabindex="-1">充电收款核对</button>
+        <button class="active" id="tab-records" data-admin-tab="records" type="button" role="tab" aria-selected="true" aria-controls="panel-records">充电订单确认</button>
+        <button id="tab-pending" data-admin-tab="pending" type="button" role="tab" aria-selected="false" aria-controls="panel-pending" tabindex="-1">待审核账号</button>
       </nav>
 
-      <section class="panel admin-panel" id="panel-pending" role="tabpanel" aria-labelledby="tab-pending">
+      <section class="panel admin-panel hidden" id="panel-pending" role="tabpanel" aria-labelledby="tab-pending">
         <div class="panel-head admin-section-head">
           <div><h2>账号审核</h2><p class="admin-muted">输入待审核账号，通过后即可使用充电服务。</p></div>
           <button class="btn-secondary" id="refresh-summary" type="button">刷新数量</button>
@@ -76,19 +76,19 @@
         </div>
       </section>
 
-      <section class="panel admin-panel hidden" id="panel-records" role="tabpanel" aria-labelledby="tab-records">
+      <section class="panel admin-panel" id="panel-records" role="tabpanel" aria-labelledby="tab-records">
         <div class="panel-head admin-section-head">
-          <div><h2>收款核对</h2><p class="admin-muted">核对转账后确认收款，误操作可撤销。</p></div>
+          <div><h2>充电订单确认</h2><p class="admin-muted">核对订单信息后确认，误操作可撤销。</p></div>
           <button class="btn-secondary" data-refresh="records" type="button">刷新记录</button>
         </div>
         <div class="panel-body">
           <div class="admin-record-tools">
             <div class="field"><label for="record-limit">最近记录条数</label><select id="record-limit"><option value="20">最近 20 条</option><option value="50">最近 50 条</option><option value="100">最近 100 条</option><option value="200">最近 200 条</option></select></div>
-            <div class="field"><label for="record-filter">收款状态</label><select id="record-filter"><option value="all">全部状态</option><option value="unpaid">待确认</option><option value="paid">已确认收款</option></select></div>
+            <div class="field"><label for="record-filter">确认状态</label><select id="record-filter"><option value="all">全部状态</option><option value="unpaid">待确认</option><option value="paid">已确认</option></select></div>
             <div class="field"><label for="record-search">查找账号</label><input id="record-search" type="search" placeholder="输入手机号查找" /></div>
           </div>
           <p id="record-summary" class="admin-muted"></p>
-          <div class="admin-list" id="record-list">切换到此页后按需加载记录。</div>
+          <div class="admin-list" id="record-list"><p class="admin-empty admin-loading">正在准备最近 20 条记录…</p></div>
         </div>
       </section>
     </main>

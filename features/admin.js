@@ -4,13 +4,14 @@
   const AUTH_KEY = 'charge-auth-session';
   const AUTH_TTL = 24 * 60 * 60 * 1000;
   const state = {
-    activeTab: 'pending', pending: [], records: [], total: 0,
+    activeTab: 'records', pending: [], records: [], total: 0,
     pendingCount: null, whitelistCount: null, accountVersion: 0,
     pendingLoaded: false, pendingVisible: false, pendingLoading: false,
     recordsLoaded: false, recordsLoading: false, recordsLimit: null,
-    approved: new Set(), approving: new Set(),
+    approved: new Set(), approving: new Set(), confirming: new Set(),
   };
   const el = (id) => document.getElementById(id);
+  const busyButtons = new WeakMap();
   let authSession = null;
 
   function node(tag, className, text) {
@@ -20,9 +21,42 @@
     return result;
   }
 
-  function status(message, type = '') {
+  function status(message, type = '', loading = false) {
     el('admin-status').textContent = message;
-    el('admin-status').className = 'notice admin-notice' + (type ? ' ' + type : '');
+    el('admin-status').className = 'notice admin-notice' + (type ? ' ' + type : '') + (loading ? ' admin-loading' : '');
+  }
+
+  function setButtonLoading(button, loading) {
+    if (loading) {
+      if (busyButtons.has(button)) return;
+      const label = button.getAttribute('aria-label');
+      busyButtons.set(button, { disabled: button.disabled, label });
+      button.disabled = true;
+      button.classList.add('is-loading');
+      button.setAttribute('aria-busy', 'true');
+      button.setAttribute('aria-label', (label || button.textContent.trim()) + '，处理中');
+    } else {
+      const saved = busyButtons.get(button);
+      if (!saved) return;
+      button.disabled = saved.disabled;
+      button.classList.remove('is-loading');
+      button.removeAttribute('aria-busy');
+      if (saved.label === null) button.removeAttribute('aria-label');
+      else button.setAttribute('aria-label', saved.label);
+      busyButtons.delete(button);
+    }
+  }
+
+  function syncRecordControls() {
+    const refresh = document.querySelector('[data-refresh="records"]');
+    setButtonLoading(refresh, state.recordsLoading);
+    refresh.disabled = state.recordsLoading || state.confirming.size > 0;
+    el('record-limit').disabled = refresh.disabled;
+    document.querySelectorAll('.admin-record-action').forEach((button) => {
+      const confirming = state.confirming.has(button.closest('[data-record-id]').dataset.recordId);
+      setButtonLoading(button, confirming);
+      button.disabled = state.recordsLoading || confirming;
+    });
   }
 
   function setServerStatus(mode) {
@@ -121,8 +155,8 @@
     return title;
   }
 
-  function empty(container, message) {
-    container.replaceChildren(node('p', 'admin-empty', message));
+  function empty(container, message, loading = false) {
+    container.replaceChildren(node('p', 'admin-empty' + (loading ? ' admin-loading' : ''), message));
   }
 
   function counts() {
@@ -134,9 +168,9 @@
 
   async function action(button, work) {
     if (button.disabled) return;
-    button.disabled = true;
+    setButtonLoading(button, true);
     try { await work(); } catch (error) { status(error.message, 'err'); }
-    finally { if (button.isConnected) button.disabled = false; }
+    finally { setButtonLoading(button, false); }
   }
 
   function applyCounts(result) {
@@ -154,9 +188,11 @@
       state.approved.add(phone);
       state.pending = state.pending.filter((item) => item.phone !== phone);
       applyCounts(result);
-      if (state.pendingLoaded) renderPending();
       status('账号 ' + phone + '：' + result.message, 'ok');
-    } finally { state.approving.delete(phone); }
+    } finally {
+      state.approving.delete(phone);
+      if (state.pendingLoaded) renderPending();
+    }
   }
 
   function renderPending() {
@@ -169,6 +205,7 @@
       main.append(accountTitle(phone), node('span', 'admin-row-meta', '等待注册审核'));
       const approve = node('button', 'btn-primary', '添加到白名单');
       approve.type = 'button';
+      if (state.approving.has(phone)) setButtonLoading(approve, true);
       approve.addEventListener('click', () => action(approve, () => approvePhone(phone)));
       const actions = node('div', 'admin-row-actions');
       actions.append(approve);
@@ -178,6 +215,7 @@
   }
 
   function renderRecords() {
+    if (!state.recordsLoaded) return;
     const filter = el('record-filter').value;
     const search = el('record-search').value.trim();
     const visible = state.records.filter((record) => record.phone.includes(search) &&
@@ -185,36 +223,48 @@
     el('record-summary').textContent = '后端共 ' + state.total + ' 条，当前加载最近 ' + state.records.length + ' 条，筛选显示 ' + visible.length + ' 条。';
     const list = el('record-list');
     list.replaceChildren();
-    if (!visible.length) return empty(list, state.records.length ? '没有符合筛选条件的记录' : '暂无成功充电记录');
+    if (!visible.length) {
+      empty(list, state.records.length ? '没有符合筛选条件的记录' : '暂无成功充电记录');
+      syncRecordControls();
+      return;
+    }
     visible.forEach((record) => {
       const paid = record.payment_confirmed === true;
       const row = node('article', 'admin-row' + (paid ? ' admin-record-confirmed' : ''));
       row.dataset.recordId = record.record_id;
       const main = node('div', 'admin-row-main');
       const title = accountTitle(record.phone);
-      title.append(node('span', 'payment-badge ' + (paid ? 'paid' : 'unpaid'), paid ? '已确认收款' : '待确认'));
+      title.append(node('span', 'payment-badge ' + (paid ? 'paid' : 'unpaid'), paid ? '已确认' : '待确认'));
       const timestamp = String(record.timestamp || '').replace('T', ' ');
       main.append(title, node('div', 'admin-row-meta', timestamp + ' · ' + record.station_num + ' 号站 / ' + record.sid + ' 号插座'));
       if (paid && record.payment_confirmed_at) main.append(node('div', 'admin-row-meta', '确认时间：' + String(record.payment_confirmed_at).replace('T', ' ')));
       const actions = node('div', 'admin-row-actions');
-      const button = node('button', (paid ? 'btn-secondary' : 'btn-primary') + ' admin-record-action', paid ? '撤销确认' : '确认收款');
+      const button = node('button', (paid ? 'btn-secondary' : 'btn-primary') + ' admin-record-action', paid ? '撤销确认' : '确认');
       button.type = 'button';
       button.addEventListener('click', () => {
-        if (paid && !window.confirm('确定撤销这条记录的收款确认？')) return;
+        if (paid && !window.confirm('确定撤销该订单的确认状态？')) return;
         action(button, async () => {
-          const result = await api('/api/admin/charge-records/confirm', {
-            record_id: record.record_id, payment_confirmed: !paid,
-          });
-          state.records = state.records.map((item) => item.record_id === record.record_id ? result.record : item);
-          renderRecords();
-          counts();
-          status('账号 ' + record.phone + '：' + (result.record.payment_confirmed ? '已确认收款' : '已撤销确认') + '，状态已保存。', 'ok');
+          const recordKey = String(record.record_id);
+          state.confirming.add(recordKey);
+          syncRecordControls();
+          try {
+            const result = await api('/api/admin/charge-records/confirm', {
+              record_id: record.record_id, payment_confirmed: !paid,
+            });
+            state.records = state.records.map((item) => item.record_id === record.record_id ? result.record : item);
+            counts();
+            status('账号 ' + record.phone + '：' + (result.record.payment_confirmed ? '已确认' : '已撤销确认') + '，状态已保存。', 'ok');
+          } finally {
+            state.confirming.delete(recordKey);
+            renderRecords();
+          }
         });
       });
       actions.append(node('span', 'admin-amount', '¥' + Number(record.amount).toFixed(2)), button);
       row.append(main, actions);
       list.append(row);
     });
+    syncRecordControls();
   }
 
   async function loadSummary() {
@@ -228,9 +278,10 @@
     if (state.pendingLoading) return;
     state.pendingLoading = true;
     const version = state.accountVersion;
-    el('pending-toggle').disabled = true;
-    el('pending-refresh').disabled = true;
-    if (!state.pendingLoaded) empty(el('pending-list'), '正在加载待审核账号…');
+    setButtonLoading(el('pending-toggle'), true);
+    setButtonLoading(el('pending-refresh'), true);
+    el('pending-list').setAttribute('aria-busy', 'true');
+    if (!state.pendingLoaded) empty(el('pending-list'), '正在加载待审核账号…', true);
     try {
       const result = await api('/api/admin/pending');
       state.pending = result.accounts.filter((item) => !state.approved.has(item.phone));
@@ -243,20 +294,20 @@
       throw error;
     } finally {
       state.pendingLoading = false;
-      el('pending-toggle').disabled = false;
-      el('pending-refresh').disabled = false;
+      setButtonLoading(el('pending-toggle'), false);
+      setButtonLoading(el('pending-refresh'), false);
+      el('pending-list').setAttribute('aria-busy', 'false');
     }
   }
 
   async function loadRecords(force = false) {
-    if (state.recordsLoading) return;
+    if (state.recordsLoading || state.confirming.size) return;
     const limit = Number(el('record-limit').value);
     if (!force && state.recordsLoaded && state.recordsLimit === limit) return;
     state.recordsLoading = true;
-    const refresh = document.querySelector('[data-refresh="records"]');
-    refresh.disabled = true;
-    el('record-limit').disabled = true;
-    if (!state.recordsLoaded) empty(el('record-list'), '正在加载最近 ' + limit + ' 条记录…');
+    syncRecordControls();
+    el('record-list').setAttribute('aria-busy', 'true');
+    if (!state.recordsLoaded) empty(el('record-list'), '正在加载最近 ' + limit + ' 条记录…', true);
     try {
       const result = await api('/api/admin/charge-records?limit=' + limit);
       state.records = result.records;
@@ -270,8 +321,8 @@
       throw error;
     } finally {
       state.recordsLoading = false;
-      refresh.disabled = false;
-      el('record-limit').disabled = false;
+      syncRecordControls();
+      el('record-list').setAttribute('aria-busy', 'false');
     }
   }
 
@@ -338,10 +389,9 @@
       loadPending().catch((error) => status(error.message, 'err'));
     }
   });
-  el('pending-refresh').addEventListener('click', () => action(el('pending-refresh'), async () => {
-    await loadPending();
-    status('待审核列表已更新', 'ok');
-  }));
+  el('pending-refresh').addEventListener('click', () => {
+    loadPending().then(() => status('待审核列表已更新', 'ok')).catch((error) => status(error.message, 'err'));
+  });
   el('record-search').addEventListener('input', renderRecords);
   el('record-filter').addEventListener('change', renderRecords);
   el('record-limit').addEventListener('change', () => {
@@ -366,7 +416,7 @@
     if (!authSession) return leave(true);
     setServerStatus('checking');
     try {
-      // summary 本身执行完整的 Token 与管理员鉴权，首屏无需再请求 verify 或列表。
+      // 先通过 summary 验证管理员身份，再自动加载订单确认首页。
       const summary = await loadSummary();
       authSession = { ...authSession, phone: summary.phone, is_admin: true };
       try { localStorage.setItem(AUTH_KEY, JSON.stringify(authSession)); } catch (_) { /* ignore */ }
@@ -375,7 +425,10 @@
       el('logged-user').classList.remove('hidden');
       el('logout-btn').classList.remove('hidden');
       el('admin-main').classList.remove('hidden');
-      status('可输入账号审核，或切换到收款核对。', 'ok');
+      el('record-limit').value = '20';
+      status('正在加载最近 20 条记录…', '', true);
+      await loadRecords();
+      status('最近 20 条充电记录已更新，请核对订单信息后确认。', 'ok');
     } catch (error) { status(error.message, 'err'); }
   }
   init();
