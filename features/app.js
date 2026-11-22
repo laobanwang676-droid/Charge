@@ -1509,12 +1509,11 @@ const SERVICE_BUSY_MESSAGE = '服务器繁忙，请使用群聊机器人充电';
         try {
           const result = await api('/api/auth', { phone, password, action: 'login' });
           saveAuthSession(phone, result.token || '', result.is_admin === true);
+          saveLoginCredentials(phone, password);
           if (result.is_admin === true) {
-            try { localStorage.removeItem(LOGIN_CREDENTIALS_KEY); } catch (_) { /* ignore */ }
             window.location.replace('admin.html');
             return;
           }
-          saveLoginCredentials(phone, password);
           setLoggedInUI(phone);
           serverStatus.classList.remove('hidden');
           checkServerHealth();
